@@ -49,15 +49,15 @@ Index: mumps/src/Makefile
  .SUFFIXES: .c .F .o
  .F.o:
 -	$(FC) $(OPTF) $(INCS) $(IORDERINGSF) $(ORDERINGSF) -I. -I../include -c $*.F $(OUTF)$*.o
-+	$(FC) $(OPTF) $(INCS) $(IORDERINGSF) $(ORDERINGSF) -I. -I../include -fPIC -Wuninitialized -Wno-maybe-uninitialized -c $*.F $(OUTF)$*.o
++	$(FC) $(OPTF) $(INCS) $(IORDERINGSF) $(ORDERINGSF) -I. -I../include -fPIC -c $*.F $(OUTF)$*.o
  .c.o:
 -	$(CC) $(OPTC) $(INCS) -I../include $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -c $*.c $(OUTC)$*.o
-+	$(CC) $(OPTC) $(INCS) -I../include $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -fPIC -Wuninitialized -Wno-maybe-uninitialized -c $*.c $(OUTC)$*.o
++	$(CC) $(OPTC) $(INCS) -I../include $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -fPIC -c $*.c $(OUTC)$*.o
  
  $(ARITH)mumps_c.o:	mumps_c.c
  	$(CC) $(OPTC) $(INCS) $(CDEFS) -DMUMPS_ARITH=MUMPS_ARITH_$(ARITH) \
 -	      $(IORDERINGSC) $(ORDERINGSC) -I../include -c $? $(OUTC)$@
-+	      $(IORDERINGSC) $(ORDERINGSC) -I../include -fPIC -Wno-error=maybe-uninitialized -c $? $(OUTC)$@
++	      $(IORDERINGSC) $(ORDERINGSC) -I../include -fPIC -c $? $(OUTC)$@
  
  
  clean:
