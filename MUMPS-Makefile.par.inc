@@ -90,9 +90,9 @@ LIBOTHERS = -lpthread
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = @@CFLAGS@@ -Dintel_ -DALLOW_NON_INIT -Wno-error=maybe-uninitialized
+OPTF    = @@CFLAGS@@ -Dintel_ -DALLOW_NON_INIT
 OPTL    = @@-O@@
-OPTC    = @@CFLAGS@@ -Wno-error=maybe-uninitialized
+OPTC    = @@CFLAGS@@
 #End Optimized options
 INCS = $(INCPAR)
 #LIB = $(LIBPAR)

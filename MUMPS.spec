@@ -1,6 +1,6 @@
 Name: MUMPS
 Version: 4.10.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -88,7 +88,13 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 %check
 # Running test programs showing how MUMPS can be used
 cd examples
+
+%if 0%{?rhel}
+module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
+%else
 module load mpi
+%endif
+
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./ssimpletest < input_simpletest_real
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./csimpletest < input_simpletest_cmplx
 cd ../
@@ -155,6 +161,11 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libdir}/%{name}-examples
 
 
 %changelog
+* Sat Mar 23 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-9
+- Removed '-Wuninitialized -Wno-maybe-uninitialized' flags because unrecognized
+  in EPEL6
+- Added condition to load MPI module properly
+
 * Sat Mar 02 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-8
 - Removed %%post/%%postun commands for devel sub-package
 
