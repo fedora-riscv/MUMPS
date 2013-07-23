@@ -1,6 +1,6 @@
 Name: MUMPS
 Version: 4.10.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -18,7 +18,7 @@ Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: openmpi-devel, scalapack-openmpi-devel, blacs-openmpi-devel
+BuildRequires: openmpi-devel >= 1.7.2, scalapack-openmpi-devel, blacs-openmpi-devel >= 1.1-50
 BuildRequires: openssh-clients
 
 %description
@@ -74,8 +74,8 @@ MUMPS_INCDIR=-I/usr/include/openmpi-%{_arch}
 
 MUMPS_LIBF77="\
 -L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib \
--lmpi_f77 -lmpi -lscalapack -lmpiblacs \
--lmpiblacsF77init -lmpiblacsCinit -llapack"
+ -lmpi -lmpi_mpifh -lscalapack -lmpiblacs \
+ -lmpiblacsF77init -lmpiblacsCinit -llapack"
 
 make MUMPS_MPI="$MUMPS_MPI" \
      MUMPS_INCDIR="$MUMPS_INCDIR" \
@@ -161,6 +161,11 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libdir}/%{name}-examples
 
 
 %changelog
+* Tue Jul 23 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-10
+- 'openmpi-devel' BR changed to 'openmpi-devel>=1.7'
+- 'blacs-openmpi-devel' BR changed to 'blacs-openmpi-devel>=1.1-50'
+- Removed '-lmpi_f77' library link, deprecated starting from 'openmpi-1.7.2'
+
 * Sat Mar 23 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-9
 - Removed '-Wuninitialized -Wno-maybe-uninitialized' flags because unrecognized
   in EPEL6
