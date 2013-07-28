@@ -24,15 +24,16 @@ Patch0: %{name}-examples-mpilibs.patch
 Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 
-BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: scalapack-openmpi-devel
-
 %if 0%{?fedora} >= 20
 BuildRequires: openmpi-devel >= 1.7.2
 BuildRequires: blacs-openmpi-devel >= 1.1-50
+BuildRequires: gcc-gfortran, blas-devel, lapack-devel
+BuildRequires: scalapack-openmpi-devel
 %else 
 BuildRequires: openmpi-devel < 1.7.2
 BuildRequires: blacs-openmpi-devel < 1.1-50
+BuildRequires: gcc-gfortran, blas-devel, lapack-devel
+BuildRequires: scalapack-openmpi-devel
 %endif
 
 BuildRequires: openssh-clients
@@ -274,7 +275,7 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_defaultdocdir}/%{nam
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
-* Fri Jul 27 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-11
+* Sat Jul 27 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-11
 - Added new macros for 'openmpi' destination directories
 - Done some package modifications according to MPI guidelines
 - This .spec file now produces '-openmpi', '-openmpi-devel', '-common' packages
