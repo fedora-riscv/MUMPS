@@ -1,6 +1,13 @@
+## Define libraries' destination
+%define _incmpidir %{_includedir}/openmpi-%{_arch}
+%define _libmpidir %{_libdir}/openmpi/lib
+
+## Define if use openmpi or not
+%define with_openmpi 1
+
 Name: MUMPS
 Version: 4.10.0
-Release: 9%{?dist}
+Release: 11%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -17,9 +24,21 @@ Patch0: %{name}-examples-mpilibs.patch
 Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 
+%if 0%{?fedora} >= 20
+BuildRequires: openmpi-devel >= 1.7.2
+BuildRequires: blacs-openmpi-devel >= 1.1-50
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: openmpi-devel, scalapack-openmpi-devel, blacs-openmpi-devel
+BuildRequires: scalapack-openmpi-devel
+%else 
+BuildRequires: openmpi-devel < 1.7.2
+BuildRequires: blacs-openmpi-devel < 1.1-50
+BuildRequires: gcc-gfortran, blas-devel, lapack-devel
+BuildRequires: scalapack-openmpi-devel
+%endif
+
 BuildRequires: openssh-clients
+Requires:      %{name}-common = %{version}-%{release}
+Requires:      environment-modules 
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -31,26 +50,46 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release}
 %description devel
 Shared links, header files for MUMPS.
 
-%package doc
-Summary: The MUMPS documentation files
-Group: Development/Libraries
-Requires: %{name}%{?_isa} = %{version}-%{release}
-%description doc
-This document describes the Fortran 90 and C user interfaces to 
-MUMPS 4.10.0 . It describes in detail the data structures, parameters, 
-calling sequences, and error diagnostics. Basic example programs
-using MUMPS are also provided.
-
 %package examples
-Summary: MUMPS illustrative test programs
+Summary: The MUMPS common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release}
 %description examples
-Illustrative test programs about how MUMPS can be used
-See README file
+This package contains common illustrative 
+test programs about how MUMPS can be used.
+
+%package common
+Summary: Documentation files for MUMPS
+Group: Development/Libraries
+BuildArch: noarch
+%description common
+This package contains common documentation files for MUMPS.
+
+########################################################
+%if %{with_openmpi}
+%package openmpi
+Summary: MUMPS libraries compiled against openmpi
+Group: Development/Libraries
+BuildRequires: openmpi-devel
+Requires: %{name}-common = %{version}-%{release}
+%description openmpi
+MUMPS libraries compiled against openmpi
+
+%package openmpi-devel
+Summary: The MUMPS headers and development-related files
+Group: Development/Libraries
+BuildRequires: openmpi-devel
+Requires: %{name}-common = %{version}-%{release}
+Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+%description openmpi-devel
+Shared links, header files for MUMPS.
+%endif
+##########################################################
 
 %prep
 %setup -q -n %{name}_%{version}
@@ -58,6 +97,8 @@ See README file
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+
+mv examples/README examples/README-examples
 
 %build
 
@@ -69,21 +110,57 @@ cp -f %{SOURCE1} Makefile.inc
 sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
 sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 
+%if 0%{?fedora} >= 20
+sed -e 's|@@MPIFORTRANLIB@@|-lmpi_mpifh|g' -i Makefile.inc
+%else
+sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
+%endif
+
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I/usr/include/openmpi-%{_arch}
 
+%if 0%{?fedora} >= 20
 MUMPS_LIBF77="\
--L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib \
--lmpi_f77 -lmpi -lscalapack -lmpiblacs \
--lmpiblacsF77init -lmpiblacsCinit -llapack"
+-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
+ -lmpi_mpifh -lscalapack -lmpiblacs \
+ -lmpiblacsF77init -lmpiblacsCinit -llapack"
+%else
+MUMPS_LIBF77="\
+-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
+ -lmpi_f77 -lscalapack -lmpiblacs \
+ -lmpiblacsF77init -lmpiblacsCinit -llapack"
+%endif
 
+#######################################################
+## Build MPI version
+%if %{with_openmpi}
+%{_openmpi_load}
 make MUMPS_MPI="$MUMPS_MPI" \
      MUMPS_INCDIR="$MUMPS_INCDIR" \
      MUMPS_LIBF77="$MUMPS_LIBF77" \
      all
+%{_openmpi_unload}
+
+%else
+
+## Build serial version
+make MUMPS_MPI="$MUMPS_MPI" \
+     MUMPS_INCDIR="$MUMPS_INCDIR" \
+     MUMPS_LIBF77="$MUMPS_LIBF77" \
+     all
+%endif
+#######################################################
 
 # Make sure documentation is using Unicode.
 iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
+
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
+
+%if %{with_openmpi}
+%post openmpi -p /sbin/ldconfig
+%postun openmpi -p /sbin/ldconfig
+%endif
 
 %check
 # Running test programs showing how MUMPS can be used
@@ -92,23 +169,49 @@ cd examples
 %if 0%{?rhel}
 module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
 %else
-module load mpi
+%{_openmpi_load}
 %endif
-
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./ssimpletest < input_simpletest_real
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./csimpletest < input_simpletest_cmplx
+%{_openmpi_unload}
 cd ../
 
 %install
 
-mkdir -p $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-%{version}
+mkdir -p $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/%{name}-examples
-mkdir -p $RPM_BUILD_ROOT%{_includedir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
 
-# Install documentation
-install -cpm 644 README $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-%{version}
+#########################################################
+%if %{with_openmpi}
+mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
+mkdir -p $RPM_BUILD_ROOT%{_libmpidir}/%{name}-%{version}/examples
+mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
+
+%{_openmpi_load}
+# Install libraries.
+install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libmpidir}
+
+# Install development files.
+install -cpm 755 lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 lib/lib*mumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 lib/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 lib/libpord.so $RPM_BUILD_ROOT%{_libmpidir}
+
+# Make symbolic links instead hard-link 
+ln -sf %{_libmpidir}/libsmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libsmumps.so
+ln -sf %{_libmpidir}/libcmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libcmumps.so
+ln -sf %{_libmpidir}/libzmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libzmumps.so
+ln -sf %{_libmpidir}/libdmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libdmumps.so
+ln -sf %{_libmpidir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
+ln -sf %{_libmpidir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
+
+install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
+%{_openmpi_load}
+%endif
+##########################################################
 
 # Install libraries.
 install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
@@ -129,38 +232,62 @@ ln -sf %{_libdir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libmum
 ln -sf %{_libdir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
-install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libdir}/%{name}-examples
-install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libdir}/%{name}-examples
 
+install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 644 examples/README-examples $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
+install -cpm 644 doc/*.pdf $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
+install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
 
-%post -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
+#######################################################
+%if %{with_openmpi}
+%files openmpi
+%{_libmpidir}/libpord-%{version}.so
+%{_libmpidir}/lib?mumps-%{version}.so
+%{_libmpidir}/libmumps_common-%{version}.so
+
+%files openmpi-devel
+%{_incmpidir}/*.h
+%{_libmpidir}/lib?mumps.so
+%{_libmpidir}/libmumps_common.so
+%{_libmpidir}/libpord.so
+%endif
+#######################################################
 
 %files
-%doc README LICENSE ChangeLog
 %{_libdir}/libpord-%{version}.so
 %{_libdir}/lib?mumps-%{version}.so
 %{_libdir}/libmumps_common-%{version}.so
 
 %files devel
-%doc ChangeLog
 %dir %{_includedir}/%{name}
 %{_includedir}/%{name}/*.h
 %{_libdir}/lib?mumps.so
 %{_libdir}/libmumps_common.so
 %{_libdir}/libpord.so
 
-%files doc
-%doc doc/*.pdf
+%files common
+## This directory contains README*, LICENSE, ChangeLog, UserGuide files
+%{_defaultdocdir}/%{name}-common-%{version}/
 
 %files examples
-%doc examples/README
-%dir %{_libdir}/%{name}-examples
-%{_libdir}/%{name}-examples/*simpletest
-%{_libdir}/%{name}-examples/*_simpletest_*
-
+%dir %{_libexecdir}/%{name}-%{version}
+%{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Sat Jul 27 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-11
+- Added new macros for 'openmpi' destination directories
+- Done some package modifications according to MPI guidelines
+- This .spec file now produces '-openmpi', '-openmpi-devel', '-common' packages
+- Added MUMPS packaging in "serial mode"
+- %%{name}-common package is a noarch
+- Added an '-examples' subpackage that contains all test programs
+
+* Tue Jul 23 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-10
+- 'openmpi-devel' BR changed to 'openmpi-devel>=1.7'
+- 'blacs-openmpi-devel' BR changed to 'blacs-openmpi-devel>=1.1-50'
+- Removed '-lmpi_f77' library link, deprecated starting from 'openmpi-1.7.2'
+
 * Sat Mar 23 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-9
 - Removed '-Wuninitialized -Wno-maybe-uninitialized' flags because unrecognized
   in EPEL6
