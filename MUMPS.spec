@@ -7,7 +7,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -39,6 +39,9 @@ BuildRequires: scalapack-openmpi-devel
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
 Requires:      environment-modules 
+
+Obsoletes:     %{name}-doc
+Obsoletes:     %{name}-examples
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -275,6 +278,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_defaultdocdir}/%{nam
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Mon Jul 29 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-12
+- Old MUMPS subpackages are now obsoletes
+
 * Sat Jul 27 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-11
 - Added new macros for 'openmpi' destination directories
 - Done some package modifications according to MPI guidelines
