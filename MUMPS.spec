@@ -1,3 +1,9 @@
+## Redefined _pkgdocdir macro for earlier Fedora versions to conform
+## this spec with 'F-20 unversioned docdir' change (bz#993984)
+%if 0%{?fedora} < 20
+%{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
+%endif
+
 ## Define libraries' destination
 %define _incmpidir %{_includedir}/openmpi-%{_arch}
 %define _libmpidir %{_libdir}/openmpi/lib
@@ -7,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -41,7 +47,7 @@ Requires:      %{name}-common = %{version}-%{release}
 Requires:      environment-modules 
 
 Obsoletes:     %{name}-doc
-Obsoletes:     %{name}-examples
+Obsoletes:     %{name}-examples < 4.10.0-12
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -181,7 +187,7 @@ cd ../
 
 %install
 
-mkdir -p $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
+mkdir -p $RPM_BUILD_ROOT%{_pkgdocdir}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
@@ -238,9 +244,9 @@ install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
-install -cpm 644 examples/README-examples $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
-install -cpm 644 doc/*.pdf $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
-install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_defaultdocdir}/%{name}-common-%{version}
+install -cpm 644 examples/README-examples $RPM_BUILD_ROOT%{_pkgdocdir}
+install -cpm 644 doc/*.pdf $RPM_BUILD_ROOT%{_pkgdocdir}
+install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 
 #######################################################
 %if %{with_openmpi}
@@ -271,13 +277,18 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_defaultdocdir}/%{nam
 
 %files common
 ## This directory contains README*, LICENSE, ChangeLog, UserGuide files
-%{_defaultdocdir}/%{name}-common-%{version}/
+%{_pkgdocdir}/
 
 %files examples
 %dir %{_libexecdir}/%{name}-%{version}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Wed Aug 07 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-13
+- Obsolete packages are now versioned (bz#993574)
+- Adding redefined _pkgdocdir macro for earlier Fedora versions to conform
+  this spec with 'F-20 unversioned docdir' change (bz#993984)
+
 * Mon Jul 29 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-12
 - Old MUMPS subpackages are now obsoletes
 
