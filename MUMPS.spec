@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -32,12 +32,12 @@ Patch2: %{name}-shared.patch
 
 %if 0%{?fedora} >= 20
 BuildRequires: openmpi-devel >= 1.7.2
-BuildRequires: blacs-openmpi-devel >= 1.1-50
+BuildRequires: blacs-openmpi-devel
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
 BuildRequires: scalapack-openmpi-devel
 %else 
 BuildRequires: openmpi-devel < 1.7.2
-BuildRequires: blacs-openmpi-devel < 1.1-50
+BuildRequires: blacs-openmpi-devel
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
 BuildRequires: scalapack-openmpi-devel
 %endif
@@ -46,8 +46,8 @@ BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
 Requires:      environment-modules 
 
-Obsoletes:     %{name}-doc
-Obsoletes:     %{name}-examples < 4.10.0-12
+Obsoletes:     %{name}-doc < 4.10.0-12
+Obsoletes:     %{name}-examples < 4.10.0-11
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -284,6 +284,10 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Wed Aug 28 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-14
+- 'blacs-openmpi-devel' request unversioned
+- Defined which version of MUMPS-doc package is obsolete
+
 * Wed Aug 07 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-13
 - Obsolete packages are now versioned (bz#993574)
 - Adding redefined _pkgdocdir macro for earlier Fedora versions to conform
