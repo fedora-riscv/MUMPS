@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -128,16 +128,20 @@ sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I/usr/include/openmpi-%{_arch}
 
+%if 0%{?fedora} >= 21
+%global mpiblacslibs "-lmpiblacs"
+%else
+%global	mpiblacslibs "-lmpiblacs -lmpiblacsF77init -lmpiblacsCinit"
+%endif
+
 %if 0%{?fedora} >= 20
 MUMPS_LIBF77="\
 -L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
- -lmpi_mpifh -lscalapack -lmpiblacs \
- -lmpiblacsF77init -lmpiblacsCinit -llapack"
+ -lmpi_mpifh -lscalapack %{mpiblacslibs} -llapack"
 %else
 MUMPS_LIBF77="\
 -L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
- -lmpi_f77 -lscalapack -lmpiblacs \
- -lmpiblacsF77init -lmpiblacsCinit -llapack"
+ -lmpi_f77 -lscalapack %{mpiblacslibs} -llapack"
 %endif
 
 #######################################################
@@ -284,6 +288,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Sat May  3 2014 Tom Callaway <spot@fedoraproject.org> - 4.10.0-15
+- rebuild against new scalapack tree of blacs
+
 * Wed Aug 28 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-14
 - 'blacs-openmpi-devel' request unversioned
 - Defined which version of MUMPS-doc package is obsolete
