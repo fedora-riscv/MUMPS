@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -288,6 +288,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Jun 06 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.10.0-16
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
 * Sat May  3 2014 Tom Callaway <spot@fedoraproject.org> - 4.10.0-15
 - rebuild against new scalapack tree of blacs
 
