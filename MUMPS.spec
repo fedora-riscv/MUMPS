@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 14%{?dist}
+Release: 17%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -23,12 +23,16 @@ Source0: http://mumps.enseeiht.fr/%{name}_%{version}.tar.gz
 # Custom Makefile changed for Fedora and built from Make.inc/Makefile.gfortran.PAR in the source.
 Source1: %{name}-Makefile.par.inc
 
+# Custom Makefile changed for Fedora and built from Make.inc/Makefile.gfortran.SEQ in the source.
+Source2: %{name}-Makefile.seq.inc
+
 # These patches create static and shared versions of pord, sequential and mumps libraries
 # They are changed for Fedora and  derive from patches for Debian on 
 # http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/raring/mumps/raring/files/head:/debian/patches/
 Patch0: %{name}-examples-mpilibs.patch
 Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
+Patch3: %{name}-shared-seq.patch
 
 %if 0%{?fedora} >= 20
 BuildRequires: openmpi-devel >= 1.7.2
@@ -80,12 +84,13 @@ BuildArch: noarch
 This package contains common documentation files for MUMPS.
 
 ########################################################
-%if %{with_openmpi}
+%if 0%{?with_openmpi}
 %package openmpi
 Summary: MUMPS libraries compiled against openmpi
 Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-common = %{version}-%{release}
+Requires: openmpi
 %description openmpi
 MUMPS libraries compiled against openmpi
 
@@ -106,6 +111,7 @@ Shared links, header files for MUMPS.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+
 
 mv examples/README examples/README-examples
 
@@ -128,36 +134,45 @@ sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I/usr/include/openmpi-%{_arch}
 
-%if 0%{?fedora} >= 20
-MUMPS_LIBF77="\
--L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
- -lmpi_mpifh -lscalapack -lmpiblacs \
- -lmpiblacsF77init -lmpiblacsCinit -llapack"
+%if 0%{?fedora} >= 21
+export MPIBLACSLIBS="-lmpiblacs"
 %else
-MUMPS_LIBF77="\
--L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi \
- -lmpi_f77 -lscalapack -lmpiblacs \
- -lmpiblacsF77init -lmpiblacsCinit -llapack"
+export MPIBLACSLIBS="-lmpiblacs -lmpiblacsF77init -lmpiblacsCinit"
 %endif
 
 #######################################################
 ## Build MPI version
-%if %{with_openmpi}
+%if 0%{?with_openmpi}
+export MPI_COMPILER_NAME=openmpi
 %{_openmpi_load}
-make MUMPS_MPI="$MUMPS_MPI" \
-     MUMPS_INCDIR="$MUMPS_INCDIR" \
-     MUMPS_LIBF77="$MUMPS_LIBF77" \
-     all
-%{_openmpi_unload}
-
+export LD_LIBRARY_PATH="%{_libdir}/openmpi/lib"
+mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
+make \
+ FC=%{_libdir}/openmpi/bin/mpif77 \
+ MUMPS_MPI="$MUMPS_MPI" \
+ MUMPS_INCDIR="$MUMPS_INCDIR" \
+%if 0%{?fedora} >= 20
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS -llapack" all
 %else
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS -llapack" all
+%endif
+%{_openmpi_unload}
+cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
+rm -rf lib/*
+make clean
+%endif
+
+patch -p0 < %{PATCH3}
 
 ## Build serial version
-make MUMPS_MPI="$MUMPS_MPI" \
-     MUMPS_INCDIR="$MUMPS_INCDIR" \
-     MUMPS_LIBF77="$MUMPS_LIBF77" \
-     all
-%endif
+rm -f Makefile.inc
+cp -f %{SOURCE2} Makefile.inc
+
+# Set build flags macro
+sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
+sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
+
+make MUMPS_LIBF77="-lmpiseq" all
 #######################################################
 
 # Make sure documentation is using Unicode.
@@ -166,7 +181,7 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
-%if %{with_openmpi}
+%if 0%{?with_openmpi}
 %post openmpi -p /sbin/ldconfig
 %postun openmpi -p /sbin/ldconfig
 %endif
@@ -175,15 +190,17 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 # Running test programs showing how MUMPS can be used
 cd examples
 
+%if 0%{?with_openmpi}
 %if 0%{?rhel}
 module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
 %else
 %{_openmpi_load}
 %endif
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./ssimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH ./csimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH ./ssimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH ./csimpletest < input_simpletest_cmplx
 %{_openmpi_unload}
 cd ../
+%endif
 
 %install
 
@@ -193,21 +210,21 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 #########################################################
-%if %{with_openmpi}
+%if 0%{?with_openmpi}
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}/%{name}-%{version}/examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
 
 %{_openmpi_load}
 # Install libraries.
-install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*-*.so $RPM_BUILD_ROOT%{_libmpidir}
 
 # Install development files.
-install -cpm 755 lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 lib/lib*mumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 lib/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 lib/libpord.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/libpord.so $RPM_BUILD_ROOT%{_libmpidir}
 
 # Make symbolic links instead hard-link 
 ln -sf %{_libmpidir}/libsmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libsmumps.so
@@ -249,7 +266,7 @@ install -cpm 644 doc/*.pdf $RPM_BUILD_ROOT%{_pkgdocdir}
 install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 
 #######################################################
-%if %{with_openmpi}
+%if 0%{?with_openmpi}
 %files openmpi
 %{_libmpidir}/libpord-%{version}.so
 %{_libmpidir}/lib?mumps-%{version}.so
@@ -284,6 +301,16 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Tue Jun 24 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-17
+- Some MPI packaging fixes
+- Changed MUMPS sequential build
+
+* Fri Jun 06 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.10.0-16
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Sat May  3 2014 Tom Callaway <spot@fedoraproject.org> - 4.10.0-15
+- rebuild against new scalapack tree of blacs
+
 * Wed Aug 28 2013 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-14
 - 'blacs-openmpi-devel' request unversioned
 - Defined which version of MUMPS-doc package is obsolete
