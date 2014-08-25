@@ -5,15 +5,15 @@
 %endif
 
 ## Define libraries' destination
-%define _incmpidir %{_includedir}/openmpi-%{_arch}
+%global _incmpidir %{_includedir}/openmpi-%{_arch}
 %define _libmpidir %{_libdir}/openmpi/lib
 
 ## Define if use openmpi or not
-%define with_openmpi 1
+%global with_openmpi 1
 
 Name: MUMPS
 Version: 4.10.0
-Release: 17%{?dist}
+Release: 20%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -34,17 +34,7 @@ Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 Patch3: %{name}-shared-seq.patch
 
-%if 0%{?fedora} >= 20
-BuildRequires: openmpi-devel >= 1.7.2
-BuildRequires: blacs-openmpi-devel
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: scalapack-openmpi-devel
-%else 
-BuildRequires: openmpi-devel < 1.7.2
-BuildRequires: blacs-openmpi-devel
-BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: scalapack-openmpi-devel
-%endif
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -88,7 +78,15 @@ This package contains common documentation files for MUMPS.
 %package openmpi
 Summary: MUMPS libraries compiled against openmpi
 Group: Development/Libraries
-BuildRequires: openmpi-devel
+%if 0%{?fedora} >= 20
+BuildRequires: openmpi-devel >= 1.7.2
+BuildRequires: blacs-openmpi-devel
+BuildRequires: scalapack-openmpi-devel
+%else 
+BuildRequires: openmpi-devel < 1.7.2
+BuildRequires: blacs-openmpi-devel
+BuildRequires: scalapack-openmpi-devel
+%endif
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi
 %description openmpi
@@ -117,7 +115,8 @@ mv examples/README examples/README-examples
 
 %build
 
-# Build parallel version.
+#######################################################
+## Build MPI version
 rm -f Makefile.inc
 cp -f %{SOURCE1} Makefile.inc
 
@@ -140,8 +139,6 @@ export MPIBLACSLIBS="-lmpiblacs"
 export MPIBLACSLIBS="-lmpiblacs -lmpiblacsF77init -lmpiblacsCinit"
 %endif
 
-#######################################################
-## Build MPI version
 %if 0%{?with_openmpi}
 export MPI_COMPILER_NAME=openmpi
 %{_openmpi_load}
@@ -190,14 +187,39 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 # Running test programs showing how MUMPS can be used
 cd examples
 
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./ssimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./dsimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./csimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./zsimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./c_example
+
+#Tests fail with the error:
+##Primary job  terminated normally, but 1 process returned
+##a non-zero exit code.. Per user-direction, the job has been aborted.
+#Need to add -gmca option (see MCA in 'mpirun --help'), failed
+#in koji buildsystem
+
 %if 0%{?with_openmpi}
 %if 0%{?rhel}
 module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
 %else
 %{_openmpi_load}
 %endif
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH ./ssimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH ./csimpletest < input_simpletest_cmplx
+#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+# mpirun -gmca orte_abort_on_non_zero_status 0 ./ssimpletest < input_simpletest_real
+#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+# mpirun -gmca orte_abort_on_non_zero_status 0 ./dsimpletest < input_simpletest_real
+#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+# mpirun -gmca orte_abort_on_non_zero_status 0 ./csimpletest < input_simpletest_cmplx
+#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+# mpirun -gmca orte_abort_on_non_zero_status 0 ./zsimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+mpirun -np 3 ./c_example
 %{_openmpi_unload}
 cd ../
 %endif
@@ -301,6 +323,16 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Mon Aug 25 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-20 
+- Excluded Fortran driver tests
+
+* Sat Aug 23 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-19 
+- Fixed BR for OpenMPI sub-packages
+- Performed serial and parallel MUMPS tests
+
+* Fri Aug 15 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 4.10.0-18 
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
 * Tue Jun 24 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-17
 - Some MPI packaging fixes
 - Changed MUMPS sequential build
