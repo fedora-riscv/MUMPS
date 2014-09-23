@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 20%{?dist}
+Release: 21%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -55,7 +55,9 @@ Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: %{name}-common = %{version}-%{release}
 %description devel
-Shared links, header files for MUMPS.
+Shared links and header files.
+This package contains dummy MPI header file 
+including symbols used by MUMPS.
 
 %package examples
 Summary: The MUMPS common illustrative test programs
@@ -110,7 +112,6 @@ Shared links, header files for MUMPS.
 %patch1 -p1
 %patch2 -p1
 
-
 mv examples/README examples/README-examples
 
 %build
@@ -131,7 +132,7 @@ sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
-MUMPS_INCDIR=-I/usr/include/openmpi-%{_arch}
+MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
 
 %if 0%{?fedora} >= 21
 export MPIBLACSLIBS="-lmpiblacs"
@@ -149,9 +150,9 @@ make \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
 %if 0%{?fedora} >= 20
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS -llapack" all
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" all
 %else
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS -llapack" all
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS" all
 %endif
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -169,7 +170,10 @@ cp -f %{SOURCE2} Makefile.inc
 sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
 sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 
-make MUMPS_LIBF77="-lmpiseq" all
+make \
+ MUMPS_LIBF77="-L%{_libdir} -lblas -llapack" \
+ LIBSEQ="-L../libseq -lmpiseq" \
+ INCSEQ="-I../libseq" all
 #######################################################
 
 # Make sure documentation is using Unicode.
@@ -226,11 +230,6 @@ cd ../
 
 %install
 
-mkdir -p $RPM_BUILD_ROOT%{_pkgdocdir}
-mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
-mkdir -p $RPM_BUILD_ROOT%{_libdir}
-mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
-
 #########################################################
 %if 0%{?with_openmpi}
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
@@ -257,9 +256,14 @@ ln -sf %{_libmpidir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/
 ln -sf %{_libmpidir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
-%{_openmpi_load}
+%{_openmpi_unload}
 %endif
 ##########################################################
+
+mkdir -p $RPM_BUILD_ROOT%{_pkgdocdir}
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 # Install libraries.
 install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
@@ -280,6 +284,7 @@ ln -sf %{_libdir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libmum
 ln -sf %{_libdir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
+install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
@@ -323,6 +328,10 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Sun Sep 07 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-21 
+- Changed MUMPS sequential build setups
+- Packaged dummy mpif.h file including symbols used by MUMPS
+
 * Mon Aug 25 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-20 
 - Excluded Fortran driver tests
 
