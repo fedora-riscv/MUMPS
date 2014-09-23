@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 21%{?dist}
+Release: 22%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -87,8 +87,9 @@ BuildRequires: scalapack-openmpi-devel
 %else 
 BuildRequires: openmpi-devel < 1.7.2
 BuildRequires: blacs-openmpi-devel
-BuildRequires: scalapack-openmpi-devel
+BuildRequires: scalapack-openmpi-devel, lapack-devel
 %endif
+
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi
 %description openmpi
@@ -152,7 +153,7 @@ make \
 %if 0%{?fedora} >= 20
  MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" all
 %else
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS" all
+ MUMPS_LIBF77="-L%{_libdir} -llapack -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS" all
 %endif
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -328,6 +329,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Tue Sep 23 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-22 
+- MUMPS-openmpi linked to 'lapack' libs in the EPEL6 buildings
+
 * Sun Sep 07 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-21 
 - Changed MUMPS sequential build setups
 - Packaged dummy mpif.h file including symbols used by MUMPS
