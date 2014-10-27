@@ -6,14 +6,14 @@
 
 ## Define libraries' destination
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
-%define _libmpidir %{_libdir}/openmpi/lib
+%global _libmpidir %{_libdir}/openmpi/lib
 
 ## Define if use openmpi or not
 %global with_openmpi 1
 
 Name: MUMPS
 Version: 4.10.0
-Release: 22%{?dist}
+Release: 23%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -329,6 +329,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Mon Oct 27 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-23
+- Rebuild of scalapack-2.0.2-5.el6.1 update (bz#1157775)
+
 * Tue Sep 23 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-22 
 - MUMPS-openmpi linked to 'lapack' libs in the EPEL6 buildings
 
