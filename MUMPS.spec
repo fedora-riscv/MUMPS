@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 4.10.0
-Release: 23%{?dist}
+Release: 24%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: Public Domain
 Group: Development/Libraries
@@ -80,15 +80,10 @@ This package contains common documentation files for MUMPS.
 %package openmpi
 Summary: MUMPS libraries compiled against openmpi
 Group: Development/Libraries
-%if 0%{?fedora} >= 20
+
 BuildRequires: openmpi-devel >= 1.7.2
-BuildRequires: blacs-openmpi-devel
-BuildRequires: scalapack-openmpi-devel
-%else 
-BuildRequires: openmpi-devel < 1.7.2
-BuildRequires: blacs-openmpi-devel
-BuildRequires: scalapack-openmpi-devel, lapack-devel
-%endif
+BuildRequires: blacs-openmpi-devel >= 2.0.2
+BuildRequires: scalapack-openmpi-devel >= 2.0.2
 
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi
@@ -126,20 +121,12 @@ cp -f %{SOURCE1} Makefile.inc
 sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
 sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 
-%if 0%{?fedora} >= 20
 sed -e 's|@@MPIFORTRANLIB@@|-lmpi_mpifh|g' -i Makefile.inc
-%else
-sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
-%endif
 
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
 
-%if 0%{?fedora} >= 21
 export MPIBLACSLIBS="-lmpiblacs"
-%else
-export MPIBLACSLIBS="-lmpiblacs -lmpiblacsF77init -lmpiblacsCinit"
-%endif
 
 %if 0%{?with_openmpi}
 export MPI_COMPILER_NAME=openmpi
@@ -150,11 +137,7 @@ make \
  FC=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
-%if 0%{?fedora} >= 20
  MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" all
-%else
- MUMPS_LIBF77="-L%{_libdir} -llapack -L%{_libdir}/openmpi/lib -lmpi -lmpi_f77 -lscalapack $MPIBLACSLIBS" all
-%endif
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 rm -rf lib/*
@@ -329,8 +312,12 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Mon Nov 10 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-24
+- Removed OpenMPI minimal release request for EPEL
+- Fixed scalapack minimal release request
+
 * Mon Oct 27 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-23
-- Rebuild of scalapack-2.0.2-5.el6.1 update (bz#1157775)
+- Rebuild after scalapack-2.0.2-5.el6.1 update (bz#1157775)
 
 * Tue Sep 23 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-22 
 - MUMPS-openmpi linked to 'lapack' libs in the EPEL6 buildings
