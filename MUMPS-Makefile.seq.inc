@@ -18,15 +18,15 @@
 #          Metis/ParMetis and SCOTCH/PT-SCOTCH (ver 5.1 and later) orderings are now available for MUMPS.
 #
 
-#SCOTCHDIR  = ${HOME}/scotch_5.1_esmumps
-#ISCOTCH    = -I$(SCOTCHDIR)/include 
+SCOTCHDIR  = /usr
+ISCOTCH    = -I$(SCOTCHDIR)/include 
 # You have to choose one among the following two lines depending on
 # the type of analysis you want to perform. If you want to perform only
 # sequential analysis choose the first (remember to add -Dscotch in the ORDERINGSF
 # variable below); for both parallel and sequential analysis choose the second 
 # line (remember to add -Dptscotch in the ORDERINGSF variable below)
 
-#LSCOTCH    = -L$(SCOTCHDIR)/lib -lesmumps -lscotch -lscotcherr
+LSCOTCH    = -L$(SCOTCHDIR)/lib -lesmumps -lscotch -lscotcherr -lscotchmetis
 #LSCOTCH    = -L$(SCOTCHDIR)/lib -lptesmumps -lptscotch -lptscotcherr
 
 
@@ -43,7 +43,7 @@ LPORD    = -L$(LPORDDIR) -lpord
 # variable below); for both parallel and sequential analysis choose the second 
 # line (remember to add -Dparmetis in the ORDERINGSF variable below)
 
-#LMETIS    = -L$(LMETISDIR) -lmetis
+LMETIS    = -L$(LMETISDIR) -lmetis
 #LMETIS    = -L$(LMETISDIR) -lparmetis -lmetis
 
 # The following variables will be used in the compilation process.
@@ -77,6 +77,7 @@ LIBSEQ  =  -L$(topdir)/libseq -lmpiseq
 #LIBBLAS = -L/usr/lib/xmm/ -lf77blas -latlas
 LIBBLAS = -lblas -llapack
 LIBOTHERS = -lpthread
+METISLIB = -lmetis
 #Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
 CDEFS   = -DAdd_
 

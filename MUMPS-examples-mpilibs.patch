@@ -4,7 +4,7 @@ Index: mumps/examples/Makefile
 ===================================================================
 --- mumps.orig/examples/Makefile
 +++ mumps/examples/Makefile
-@@ -25,29 +25,29 @@
+@@ -26,29 +26,29 @@
  LIBSMUMPS = $(libdir)/libsmumps$(PLAT)$(LIBEXT) $(LIBMUMPS_COMMON)
  
  ssimpletest:  $(LIBSMUMPS)  $$@.o
