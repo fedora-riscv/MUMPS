@@ -4,7 +4,7 @@ Index: mumps/PORD/lib/Makefile
 ===================================================================
 --- mumps.orig/PORD/lib/Makefile
 +++ mumps/PORD/lib/Makefile
-@@ -8,7 +8,7 @@
+@@ -9,7 +9,7 @@
  
  INCLUDES = -I../include
  
@@ -13,7 +13,7 @@ Index: mumps/PORD/lib/Makefile
  
  OBJS = graph.o gbipart.o gbisect.o ddcreate.o ddbisect.o nestdiss.o \
         multisector.o gelim.o bucket.o tree.o \
-@@ -21,12 +21,16 @@
+@@ -24,12 +24,16 @@
  .c.o:
  	$(CC) $(COPTIONS) -c $*.c $(OUTC)$*.o
  
@@ -24,8 +24,8 @@ Index: mumps/PORD/lib/Makefile
  	$(RANLIB) $@
  
 +libpord$(PLAT).so: $(OBJS)
-+	$(CC) -shared $(OBJS) -Wl,-soname,libpord$(PLAT)-4.10.0.so -o libpord$(PLAT)-4.10.0.so -Wl,-z,defs
-+	ln -s libpord$(PLAT)-4.10.0.so $@
++	$(CC) -shared $(OBJS) -Wl,-soname,libpord$(PLAT)-5.0.0.so -o libpord$(PLAT)-5.0.0.so -Wl,-z,defs
++	ln -s libpord$(PLAT)-5.0.0.so $@
 +
  clean:
  	rm -f *.o
@@ -38,15 +38,15 @@ Index: mumps/Makefile
 --- mumps.orig/Makefile
 +++ mumps/Makefile
 @@ -51,7 +51,7 @@
- 	(cd examples ; $(MAKE) z)
- 
+ dexamples:	d
+ 	(cd examples ; $(MAKE) d)
  
 -requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT)$(LIBEXT)
 +requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT).a $(libdir)/libpord$(PLAT).so
  
  # dummy MPI library (sequential version)
  
-@@ -59,19 +59,25 @@
+@@ -59,19 +59,26 @@
  	(cd libseq; $(MAKE))
  
  # Build the libpord.a library and copy it into $(topdir)/lib
@@ -54,7 +54,7 @@ Index: mumps/Makefile
 +$(libdir)/libpord$(PLAT).a:
  	if [ "$(LPORDDIR)" != "" ] ; then \
  	  cd $(LPORDDIR); \
- 	  $(MAKE) CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" RANLIB="$(RANLIB)" OUTC=$(OUTC) LIBEXT=$(LIBEXT); \
+ 	  $(MAKE) CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" RANLIB="$(RANLIB)" OUTC="$(OUTC)" LIBEXT=$(LIBEXT); \
  	fi;
  	if [ "$(LPORDDIR)" != "" ] ; then \
 -	  cp $(LPORDDIR)/libpord$(LIBEXT) $@; \
@@ -67,11 +67,13 @@ Index: mumps/Makefile
 +	if [ "$(LPORDDIR)" != "" ] ; then \
 +	cp -a $(LPORDDIR)/libpord*.so lib/; fi;
 +
++
  clean:
  	(cd src; $(MAKE) clean)
  	(cd examples; $(MAKE) clean)
 -	(cd $(libdir); $(RM) *$(PLAT)$(LIBEXT))
 +	(cd $(libdir); $(RM) *$(PLAT).a *$(PLAT).so)
  	(cd libseq; $(MAKE) clean)
- 	if [ $(LPORDDIR) != "" ] ; then \
+ 	if [ "$(LPORDDIR)" != "" ] ; then \
  	  cd $(LPORDDIR); $(MAKE) realclean; \
+

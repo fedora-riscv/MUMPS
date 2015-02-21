@@ -8,14 +8,18 @@
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
 
+%if 0%{?fedora} > 20
 ## Define if use openmpi or not
 %global with_openmpi 1
+%else
+%global with_openmpi 0
+%endif
 
 Name: MUMPS
-Version: 4.10.0
-Release: 24%{?dist}
+Version: 5.0.0
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
-License: Public Domain
+License: CeCILL-C 
 Group: Development/Libraries
 URL: http://mumps.enseeiht.fr/
 Source0: http://mumps.enseeiht.fr/%{name}_%{version}.tar.gz
@@ -35,13 +39,11 @@ Patch2: %{name}-shared.patch
 Patch3: %{name}-shared-seq.patch
 
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
+BuildRequires: metis-devel, scotch-devel
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
 Requires:      environment-modules 
-
-Obsoletes:     %{name}-doc < 4.10.0-12
-Obsoletes:     %{name}-examples < 4.10.0-11
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -84,6 +86,7 @@ Group: Development/Libraries
 BuildRequires: openmpi-devel >= 1.7.2
 BuildRequires: blacs-openmpi-devel >= 2.0.2
 BuildRequires: scalapack-openmpi-devel >= 2.0.2
+BuildRequires: metis-devel, ptscotch-openmpi-devel
 
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi
@@ -125,6 +128,11 @@ sed -e 's|@@MPIFORTRANLIB@@|-lmpi_mpifh|g' -i Makefile.inc
 
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
+LMETISDIR=%{_libdir}
+LMETIS="-L%{_libdir} -lmetis"
+SCOTCHDIR=%{_prefix}
+ISCOTCH=-I%{_includedir}/openmpi-%{_arch}
+LSCOTCH="-L%{_libdir}/openmpi/lib -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
 export MPIBLACSLIBS="-lmpiblacs"
 
@@ -137,7 +145,11 @@ make \
  FC=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" all
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" \
+ LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
+ SCOTCHDIR=$SCOTCHDIR \
+ ISCOTCH=$ISCOTCH \
+ LSCOTCH="$LSCOTCH" all
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 rm -rf lib/*
@@ -157,7 +169,13 @@ sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 make \
  MUMPS_LIBF77="-L%{_libdir} -lblas -llapack" \
  LIBSEQ="-L../libseq -lmpiseq" \
- INCSEQ="-I../libseq" all
+ INCSEQ="-I../libseq" \
+ LMETISDIR=%{_libdir} \
+ LMETIS="-L%{_libdir} -lmetis" \
+ SCOTCHDIR=%{_prefix} \
+ ISCOTCH=-I%{_includedir} \
+ LSCOTCH="-L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ all
 #######################################################
 
 # Make sure documentation is using Unicode.
@@ -186,28 +204,22 @@ LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./c_example
 
-#Tests fail with the error:
-##Primary job  terminated normally, but 1 process returned
-##a non-zero exit code.. Per user-direction, the job has been aborted.
-#Need to add -gmca option (see MCA in 'mpirun --help'), failed
-#in koji buildsystem
-
 %if 0%{?with_openmpi}
 %if 0%{?rhel}
 module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
 %else
 %{_openmpi_load}
 %endif
-#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
-# mpirun -gmca orte_abort_on_non_zero_status 0 ./ssimpletest < input_simpletest_real
-#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
-# mpirun -gmca orte_abort_on_non_zero_status 0 ./dsimpletest < input_simpletest_real
-#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
-# mpirun -gmca orte_abort_on_non_zero_status 0 ./csimpletest < input_simpletest_cmplx
-#LD_LIBRARY_PATH=$PWD:../%%{name}-%%{version}-openmpi/lib:$LD_LIBRARY_PATH \
-# mpirun -gmca orte_abort_on_non_zero_status 0 ./zsimpletest < input_simpletest_cmplx
 LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
-mpirun -np 3 ./c_example
+ ./ssimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+ ./dsimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+ ./csimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+ ./zsimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
+ ./c_example
 %{_openmpi_unload}
 cd ../
 %endif
@@ -306,12 +318,22 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %files common
 ## This directory contains README*, LICENSE, ChangeLog, UserGuide files
 %{_pkgdocdir}/
+%if 0%{?fedora}
+%license %{_pkgdocdir}/LICENSE
+%endif
 
 %files examples
 %dir %{_libexecdir}/%{name}-%{version}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Feb 20 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.0-1
+- Update to MUMPS-5.0.0
+- License changed in CeCILL-C
+- Linked against Metis
+- Linked serial version against Scotch
+- Linked MPI version against PT-Scotch
+
 * Mon Nov 10 2014 Antonio Trande <sagitter@fedoraproject.org> - 4.10.0-24
 - Removed OpenMPI minimal release request for EPEL
 - Fixed scalapack minimal release request
