@@ -8,16 +8,12 @@
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
 
-%if 0%{?fedora} > 20
 ## Define if use openmpi or not
 %global with_openmpi 1
-%else
-%global with_openmpi 0
-%endif
 
 Name: MUMPS
 Version: 5.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -83,9 +79,9 @@ This package contains common documentation files for MUMPS.
 Summary: MUMPS libraries compiled against openmpi
 Group: Development/Libraries
 
-BuildRequires: openmpi-devel >= 1.7.2
-BuildRequires: blacs-openmpi-devel >= 2.0.2
-BuildRequires: scalapack-openmpi-devel >= 2.0.2
+BuildRequires: openmpi-devel
+BuildRequires: blacs-openmpi-devel
+BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel, ptscotch-openmpi-devel
 
 Requires: %{name}-common = %{version}-%{release}
@@ -121,10 +117,15 @@ rm -f Makefile.inc
 cp -f %{SOURCE1} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 
+## EPEL7 still provides OpenMPI 1.6.4
+%if 0%{?epel} >= 7
+sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
+%else
 sed -e 's|@@MPIFORTRANLIB@@|-lmpi_mpifh|g' -i Makefile.inc
+%endif
 
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
@@ -145,7 +146,7 @@ make \
  FC=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi -lmpi_mpifh -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -163,7 +164,7 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis|g' -i Makefile.inc
 sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
 
 make \
@@ -327,6 +328,11 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Wed Feb 25 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.0-2
+- Fixed conditional macro for OpenMPI sub-package on EPEL7
+- Fixed library linkage against OpenMPI on EPEL7
+- Added ORDERINGSF variables for Scotch and Metis
+
 * Fri Feb 20 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.0-1
 - Update to MUMPS-5.0.0
 - License changed in CeCILL-C
