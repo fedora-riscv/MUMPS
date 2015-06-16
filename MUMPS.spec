@@ -13,7 +13,7 @@
 
 Name: MUMPS
 Version: 5.0.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -328,6 +328,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.0.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
 * Wed Feb 25 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.0-2
 - Fixed conditional macro for OpenMPI sub-package on EPEL7
 - Fixed library linkage against OpenMPI on EPEL7
