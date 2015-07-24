@@ -8,12 +8,14 @@
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
 
+%global soname_version 5.0.0
+
 ## Define if use openmpi or not
 %global with_openmpi 1
 
 Name: MUMPS
-Version: 5.0.0
-Release: 2%{?dist}
+Version: 5.0.1
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -240,17 +242,17 @@ install -cpm 755 %{name}-%{version}-openmpi/lib/lib*-*.so $RPM_BUILD_ROOT%{_libm
 # Install development files.
 install -cpm 755 %{name}-%{version}-openmpi/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpidir}
 install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
 install -cpm 755 %{name}-%{version}-openmpi/lib/libpord.so $RPM_BUILD_ROOT%{_libmpidir}
 
 # Make symbolic links instead hard-link 
-ln -sf %{_libmpidir}/libsmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libsmumps.so
-ln -sf %{_libmpidir}/libcmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libcmumps.so
-ln -sf %{_libmpidir}/libzmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libzmumps.so
-ln -sf %{_libmpidir}/libdmumps-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libdmumps.so
-ln -sf %{_libmpidir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
-ln -sf %{_libmpidir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
+ln -sf %{_libmpidir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libsmumps.so
+ln -sf %{_libmpidir}/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libcmumps.so
+ln -sf %{_libmpidir}/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libzmumps.so
+ln -sf %{_libmpidir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libdmumps.so
+ln -sf %{_libmpidir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
+ln -sf %{_libmpidir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
 %{_openmpi_unload}
@@ -268,17 +270,17 @@ install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
 # Install development files.
 install -cpm 755 lib/libmumps_common.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 lib/lib*mumps.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/lib*mumps-%{version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/libpord-%{version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 lib/libpord.so $RPM_BUILD_ROOT%{_libdir}
 
 # Make symbolic links instead hard-link 
-ln -sf %{_libdir}/libsmumps-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumps.so
-ln -sf %{_libdir}/libcmumps-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libcmumps.so
-ln -sf %{_libdir}/libzmumps-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libzmumps.so
-ln -sf %{_libdir}/libdmumps-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumps.so
-ln -sf %{_libdir}/libmumps_common-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libmumps_common.so
-ln -sf %{_libdir}/libpord-%{version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
+ln -sf %{_libdir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumps.so
+ln -sf %{_libdir}/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libcmumps.so
+ln -sf %{_libdir}/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libzmumps.so
+ln -sf %{_libdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumps.so
+ln -sf %{_libdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumps_common.so
+ln -sf %{_libdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
@@ -292,9 +294,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 #######################################################
 %if 0%{?with_openmpi}
 %files openmpi
-%{_libmpidir}/libpord-%{version}.so
-%{_libmpidir}/lib?mumps-%{version}.so
-%{_libmpidir}/libmumps_common-%{version}.so
+%{_libmpidir}/libpord-%{soname_version}.so
+%{_libmpidir}/lib?mumps-%{soname_version}.so
+%{_libmpidir}/libmumps_common-%{soname_version}.so
 
 %files openmpi-devel
 %{_incmpidir}/*.h
@@ -305,9 +307,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 #######################################################
 
 %files
-%{_libdir}/libpord-%{version}.so
-%{_libdir}/lib?mumps-%{version}.so
-%{_libdir}/libmumps_common-%{version}.so
+%{_libdir}/libpord-%{soname_version}.so
+%{_libdir}/lib?mumps-%{soname_version}.so
+%{_libdir}/libmumps_common-%{soname_version}.so
 
 %files devel
 %dir %{_includedir}/%{name}
@@ -328,6 +330,13 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Jul 24 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-1
+- Update to 5.0.1
+- Added a soname_version macro
+
+* Tue Jun 16 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.0.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
 * Wed Feb 25 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.0-2
 - Fixed conditional macro for OpenMPI sub-package on EPEL7
 - Fixed library linkage against OpenMPI on EPEL7
