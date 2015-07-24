@@ -17,9 +17,9 @@ Index: mumps/src/Makefile
  
  OBJS_COMMON_MOD = \
          ana_omp_m.o\
-@@ -153,14 +155,23 @@
+@@ -154,14 +154,22 @@
          $(ARITH)type3_root.o\
- 	$(ARITH)mumps_restart.o
+         $(ARITH)mumps_restart.o
  
 -$(libdir)/libmumps_common$(PLAT)$(LIBEXT):      $(OBJS_COMMON_MOD) $(OBJS_COMMON_OTHER)
 -	$(AR)$@ $?
@@ -41,11 +41,10 @@ Index: mumps/src/Makefile
 +	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumps$(PLAT)-5.0.0.so -L$(libdir) -lmumps_common$(PLAT) $(MUMPS_LIBF77) $(OPTL) -lopen-rte $(OPTL) -lopen-pal $(LORDERINGS) $(MPIFLIB) $(METISLIB) -lblas $(SCALAP) -o $(libdir)/lib$(ARITH)mumps$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
 +	ln -s lib$(ARITH)mumps$(PLAT)-5.0.0.so $@
 +
-+
  # Dependencies between modules:
  $(ARITH)mumps_load.o:		$(ARITH)mumps_comm_buffer.o \
  				$(ARITH)mumps_struc_def.o \
-@@ -258,13 +269,13 @@
+@@ -259,13 +267,13 @@
  
  .SUFFIXES: .c .F .o
  .F.o:
