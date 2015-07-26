@@ -15,7 +15,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -87,7 +87,6 @@ BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel, ptscotch-openmpi-devel
 
 Requires: %{name}-common = %{version}-%{release}
-Requires: openmpi
 %description openmpi
 MUMPS libraries compiled against openmpi
 
@@ -330,6 +329,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Sun Jul 26 2015 Sandro Mani <manisandro@gmail.com> - 5.0.1-2
+- Rebuild for RPM MPI Requires Provides Change
+
 * Fri Jul 24 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-1
 - Update to 5.0.1
 - Added a soname_version macro
