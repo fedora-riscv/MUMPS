@@ -15,7 +15,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -329,6 +329,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Tue Sep 15 2015 Orion Poplawski <orion@cora.nwra.com> - 5.0.1-3
+- Rebuild for openmpi 1.10.0
+
 * Sun Jul 26 2015 Sandro Mani <manisandro@gmail.com> - 5.0.1-2
 - Rebuild for RPM MPI Requires Provides Change
 
