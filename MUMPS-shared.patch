@@ -30,7 +30,7 @@ Index: mumps/src/Makefile
 -$(libdir)/lib$(ARITH)mumps$(PLAT)$(LIBEXT):    $(OBJS_MOD) $(OBJS_OTHER)
 -	$(AR)$@ $?
 +$(libdir)/libmumps_common$(PLAT).so:	$(OBJS_COMMON_MOD) $(OBJS_COMMON_OTHER)
-+	$(FC) -shared $^ -Wl,-soname,libmumps_common$(PLAT)-5.0.0.so -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) $(OPTL) -lopen-rte $(OPTL) -lopen-pal $(MPIFLIB) $(MPICLIB) $(METISLIB) -o $(libdir)/libmumps_common$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
++	$(FC) -shared $^ -Wl,-soname,libmumps_common$(PLAT)-5.0.0.so $(OPTL) -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) -lopen-rte -lopen-pal $(MPIFLIB) $(MPICLIB) $(METISLIB) -o $(libdir)/libmumps_common$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
 +	ln -s libmumps_common$(PLAT)-5.0.0.so $@
 +
 +$(libdir)/lib$(ARITH)mumps$(PLAT).a:    $(OBJS_MOD) $(OBJS_OTHER)
@@ -38,7 +38,7 @@ Index: mumps/src/Makefile
  	$(RANLIB) $@
  
 +$(libdir)/lib$(ARITH)mumps$(PLAT).so:    $(OBJS_MOD) $(OBJS_OTHER)
-+	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumps$(PLAT)-5.0.0.so -L$(libdir) -lmumps_common$(PLAT) $(MUMPS_LIBF77) $(OPTL) -lopen-rte $(OPTL) -lopen-pal $(LORDERINGS) $(MPIFLIB) $(METISLIB) -lblas $(SCALAP) -o $(libdir)/lib$(ARITH)mumps$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
++	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumps$(PLAT)-5.0.0.so $(OPTL) -L$(libdir) -lmumps_common$(PLAT) $(MUMPS_LIBF77) -lopen-rte -lopen-pal $(LORDERINGS) $(MPIFLIB) $(METISLIB) -lblas $(SCALAP) -o $(libdir)/lib$(ARITH)mumps$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
 +	ln -s lib$(ARITH)mumps$(PLAT)-5.0.0.so $@
 +
  # Dependencies between modules:

@@ -1,3 +1,11 @@
+%if 0%{?fedora} <= 22
+%global _hardened_build 1
+%endif
+
+%if 0%{?rhel} < 7
+%{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
+%endif
+
 ## Redefined _pkgdocdir macro for earlier Fedora versions to conform
 ## this spec with 'F-20 unversioned docdir' change (bz#993984)
 %if 0%{?fedora} < 20
@@ -15,7 +23,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -87,6 +95,7 @@ BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel, ptscotch-openmpi-devel
 
 Requires: %{name}-common = %{version}-%{release}
+Requires: openmpi
 %description openmpi
 MUMPS libraries compiled against openmpi
 
@@ -118,8 +127,8 @@ rm -f Makefile.inc
 cp -f %{SOURCE1} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
-sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 
 ## EPEL7 still provides OpenMPI 1.6.4
 %if 0%{?epel} >= 7
@@ -132,7 +141,7 @@ MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_prefix}
+SCOTCHDIR=%{_libdir}/openmpi
 ISCOTCH=-I%{_includedir}/openmpi-%{_arch}
 LSCOTCH="-L%{_libdir}/openmpi/lib -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
@@ -142,6 +151,7 @@ export MPIBLACSLIBS="-lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
 %{_openmpi_load}
 export LD_LIBRARY_PATH="%{_libdir}/openmpi/lib"
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 make \
  FC=%{_libdir}/openmpi/bin/mpif77 \
@@ -158,6 +168,8 @@ rm -rf lib/*
 make clean
 %endif
 
+######################################################
+
 patch -p0 < %{PATCH3}
 
 ## Build serial version
@@ -165,9 +177,10 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis|g' -i Makefile.inc
-sed -e 's|@@-O@@|-Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 make \
  MUMPS_LIBF77="-L%{_libdir} -lblas -llapack" \
  LIBSEQ="-L../libseq -lmpiseq" \
@@ -329,6 +342,9 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Oct 30 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-4
+- Hardened builds on <F23
+
 * Tue Sep 15 2015 Orion Poplawski <orion@cora.nwra.com> - 5.0.1-3
 - Rebuild for openmpi 1.10.0
 
