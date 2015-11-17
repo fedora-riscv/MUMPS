@@ -24,7 +24,7 @@ Index: mumps/PORD/lib/Makefile
  	$(RANLIB) $@
  
 +libpord$(PLAT).so: $(OBJS)
-+	$(CC) -shared $(OBJS) -Wl,-soname,libpord$(PLAT)-5.0.0.so -o libpord$(PLAT)-5.0.0.so -Wl,-z,defs
++	$(CC) -shared $(OBJS) -Wl,-soname,libpord$(PLAT)-5.0.0.so -o libpord$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
 +	ln -s libpord$(PLAT)-5.0.0.so $@
 +
  clean:

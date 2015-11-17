@@ -6,12 +6,6 @@
 %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
 %endif
 
-## Redefined _pkgdocdir macro for earlier Fedora versions to conform
-## this spec with 'F-20 unversioned docdir' change (bz#993984)
-%if 0%{?fedora} < 20
-%{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
-%endif
-
 ## Define libraries' destination
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
@@ -23,7 +17,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -36,6 +30,9 @@ Source1: %{name}-Makefile.par.inc
 # Custom Makefile changed for Fedora and built from Make.inc/Makefile.gfortran.SEQ in the source.
 Source2: %{name}-Makefile.seq.inc
 
+##OpenMPI and metis missing
+ExcludeArch: s390 s390x
+
 # These patches create static and shared versions of pord, sequential and mumps libraries
 # They are changed for Fedora and  derive from patches for Debian on 
 # http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/raring/mumps/raring/files/head:/debian/patches/
@@ -45,7 +42,7 @@ Patch2: %{name}-shared.patch
 Patch3: %{name}-shared-seq.patch
 
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: metis-devel, scotch-devel
+BuildRequires: metis-devel, scotch-devel, pkgconfig
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -124,44 +121,73 @@ mv examples/README examples/README-examples
 #######################################################
 ## Build MPI version
 rm -f Makefile.inc
+%if 0%{?with_openmpi}
+%{_openmpi_load}
 cp -f %{SOURCE1} Makefile.inc
+
+%if 0%{?fedora}
+%global mpif77_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-f77)
+%global mpif77_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-f77)
+%global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-fort)
+%global mpifort_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-fort)
+%global mpic_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi)
+%endif
+%if 0%{?rhel} && 0%{?rhel} < 7
+%global mpif77_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
+%global mpif77_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_mpifh
+%global mpic_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi
+%endif
+%if 0%{?rhel} && 0%{?rhel} >= 7
+%ifarch ppc64le
+%global mpif77_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-f77)
+%global mpif77_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-f77)
+%global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-fort)
+%global mpifort_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-fort)
+%global mpic_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi)
+%else
+%global mpif77_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
+%global mpif77_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_f77
+%global mpifort_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
+%global mpifort_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_f77
+%global mpic_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi
+%endif
+%endif
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 
 ## EPEL7 still provides OpenMPI 1.6.4
-%if 0%{?epel} >= 7
-sed -e 's|@@MPIFORTRANLIB@@|-lmpi_f77|g' -i Makefile.inc
+%if 0%{?rhel} && 0%{?rhel} < 7
+sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs}|g' -i Makefile.inc
 %else
-sed -e 's|@@MPIFORTRANLIB@@|-lmpi_mpifh|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
-MUMPS_INCDIR=-I%{_includedir}/openmpi-%{_arch}
+MUMPS_INCDIR=-I%{_incmpidir}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
 SCOTCHDIR=%{_libdir}/openmpi
-ISCOTCH=-I%{_includedir}/openmpi-%{_arch}
-LSCOTCH="-L%{_libdir}/openmpi/lib -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+ISCOTCH=-I%{_incmpidir}
+LSCOTCH="-L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
 export MPIBLACSLIBS="-lmpiblacs"
-
-%if 0%{?with_openmpi}
 export MPI_COMPILER_NAME=openmpi
-%{_openmpi_load}
-export LD_LIBRARY_PATH="%{_libdir}/openmpi/lib"
+export LD_LIBRARY_PATH="%{_libmpidir}"
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
+
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 make \
  FC=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir}/openmpi -L%{_libdir}/openmpi/lib -lmpi $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir}/openmpi %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
- LSCOTCH="$LSCOTCH" all
+ LSCOTCH="$LSCOTCH" \
+ OPTL="%{__global_ldflags} -Wl,-z,now" all
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 rm -rf lib/*
@@ -190,6 +216,7 @@ make \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH=-I%{_includedir} \
  LSCOTCH="-L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ OPTL="%{__global_ldflags} -Wl,-z,now" \
  all
 #######################################################
 
@@ -271,7 +298,6 @@ install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
 %endif
 ##########################################################
 
-mkdir -p $RPM_BUILD_ROOT%{_pkgdocdir}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
@@ -299,9 +325,6 @@ install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
-install -cpm 644 examples/README-examples $RPM_BUILD_ROOT%{_pkgdocdir}
-install -cpm 644 doc/*.pdf $RPM_BUILD_ROOT%{_pkgdocdir}
-install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 
 #######################################################
 %if 0%{?with_openmpi}
@@ -331,17 +354,20 @@ install -cpm 644 ChangeLog LICENSE README $RPM_BUILD_ROOT%{_pkgdocdir}
 %{_libdir}/libpord.so
 
 %files common
-## This directory contains README*, LICENSE, ChangeLog, UserGuide files
-%{_pkgdocdir}/
-%if 0%{?fedora}
-%license %{_pkgdocdir}/LICENSE
-%endif
+%{!?_licensedir:%global license %doc}
+%doc examples/README-examples 
+%doc doc/*.pdf ChangeLog README
+%license LICENSE
 
 %files examples
 %dir %{_libexecdir}/%{name}-%{version}
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Mon Nov 16 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-5
+- Set MPI libraries by using pkgconfig
+- ExcludeArch s390x s390
+
 * Fri Oct 30 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-4
 - Hardened builds on <F23
 
