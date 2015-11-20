@@ -17,7 +17,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -138,30 +138,38 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpic_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi
 %endif
 %if 0%{?rhel} && 0%{?rhel} >= 7
-%ifarch ppc64le
 %global mpif77_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-f77)
 %global mpif77_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-f77)
 %global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-fort)
 %global mpifort_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-fort)
 %global mpic_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi)
-%else
-%global mpif77_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
-%global mpif77_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_f77
-%global mpifort_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
-%global mpifort_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_f77
-%global mpic_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi
 %endif
+%ifarch ppc64le ppc64
+%global mpif77_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-f77)
+%global mpif77_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-f77)
+%global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --cflags ompi-fort)
+%global mpifort_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi-fort)
+%global mpic_libs %(env PKG_CONFIG_PATH=%{_libdir}/openmpi/lib/pkgconfig %{_bindir}/pkg-config --libs ompi)
 %endif
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 
-## EPEL7 still provides OpenMPI 1.6.4
-%if 0%{?rhel} && 0%{?rhel} < 7
-sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs}|g' -i Makefile.inc
+%ifarch ppc64le ppc64
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+%endif
+
+## EPEL6 provides OpenMPI 1.8.1
+## EPEL7 provides OpenMPI 1.6.4
+%if 0%{?rhel}
+sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
+%endif
+
+%if 0%{?fedora} > 23
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
 %else
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
@@ -355,7 +363,7 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 
 %files common
 %{!?_licensedir:%global license %doc}
-%doc examples/README-examples 
+%doc examples/README-examples
 %doc doc/*.pdf ChangeLog README
 %license LICENSE
 
@@ -364,6 +372,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Wed Nov 18 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-6
+- Fixed links to OpenMPI-1.10 libraries
+
 * Mon Nov 16 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-5
 - Set MPI libraries by using pkgconfig
 - ExcludeArch s390x s390
