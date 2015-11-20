@@ -17,7 +17,7 @@
 
 Name: MUMPS
 Version: 5.0.1
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -153,10 +153,8 @@ sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -l
 sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
 %endif
 
-%if 0%{?fedora} > 23
+%if 0%{?fedora}
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
-%else
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
@@ -359,6 +357,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Nov 20 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-8
+- Fixed links to OpenMPI-1.10.1 libraries on Fedora
+
 * Fri Nov 20 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-7
 - Fixed links to OpenMPI-1.6.4 libraries on EPEL7
 
