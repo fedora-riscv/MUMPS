@@ -16,15 +16,20 @@
 
 ## Define if use openmpi/mpich or not
 %global with_openmpi 1
-%if 0%{?fedora}
 %global with_mpich 1
-%else
+
+# No OpenMPI support on these arches
+# metis unavailable
+ExcludeArch: s390 s390x
+
+# No MPICH support on these arches
+%ifarch ppc64 ppc64le
 %global with_mpich 0
 %endif
 
 Name: MUMPS
 Version: 5.0.1
-Release: 9%{?dist}
+Release: 10%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -36,9 +41,6 @@ Source1: %{name}-Makefile.par.inc
 
 # Custom Makefile changed for Fedora and built from Make.inc/Makefile.gfortran.SEQ in the source.
 Source2: %{name}-Makefile.seq.inc
-
-##OpenMPI and metis missing
-ExcludeArch: s390 s390x
 
 # These patches create static and shared versions of pord, sequential and mumps libraries
 # They are changed for Fedora and  derive from patches for Debian on 
@@ -174,6 +176,7 @@ cp -f %{SOURCE1} Makefile.inc
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 ## EPEL6 provides OpenMPI 1.8.1
 ## EPEL7 provides OpenMPI 1.10.0
@@ -237,6 +240,7 @@ cp -f %{SOURCE1} Makefile.inc
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
 
 MUMPS_MPI=mpich
@@ -255,8 +259,8 @@ export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 make \
  CC=%{_libdir}/mpich/bin/mpicc \
- FC=%{_libdir}/mpich/bin/mpifort \
- FL=%{_libdir}/mpich/bin/mpifort \
+ FC=%{_libdir}/mpich/bin/mpif77 \
+ FL=%{_libdir}/mpich/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
  MUMPS_LIBF77="-L%{_libdir}/mpich %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
@@ -341,7 +345,11 @@ LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
 %endif
 
 %if 0%{?with_mpich}
+%if 0%{?rhel}
+module load %{_sysconfdir}/modulefiles/mpich-%{_arch}
+%else
 %{_mpich_load}
+%endif
 LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
  ./ssimpletest < input_simpletest_real
 LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
@@ -499,6 +507,11 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Jan 08 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-10
+- Built MPICH libraries on EPEL (bz#1296387)
+- Exclude OpenMPI on s390 arches
+- Exclude MPICH on PPC arches
+
 * Thu Jan 07 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-9
 - Built MPICH libraries (bz#1296387)
 - Removed useless Requires packages

@@ -78,7 +78,7 @@ SCALAP  = -lscalapack -lmpiblacs
 INCPAR = $(MUMPS_INCDIR)
 #LIBPAR = $(SCALAP)  -L/usr/local/lib/ -llammpio -llamf77mpi -lmpi -llam -lutil -ldl -lpthread
 MPIFLIB = @@MPIFORTRANLIB@@
-MPICLIB = -lmpi
+MPICLIB = @@MPICLIB@@
 METISLIB = -lmetis
 LIBPAR = $(SCALAP) $(MPIFLIB) 
 # See point 17 in the FAQ to have more details on the compilation of mpich with gfortran
