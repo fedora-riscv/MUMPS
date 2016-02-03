@@ -29,7 +29,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -507,6 +507,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.1-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
 * Fri Jan 08 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-10
 - Built MPICH libraries on EPEL (bz#1296387)
 - Exclude OpenMPI on s390 arches
