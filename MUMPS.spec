@@ -29,7 +29,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 11%{?dist}
+Release: 12%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -211,12 +211,12 @@ make \
  FL=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir}/openmpi %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77=" -Wl,--as-needed -L%{_libdir}/openmpi %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 rm -rf lib/*
@@ -249,7 +249,7 @@ LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
 SCOTCHDIR=%{_libdir}/mpich
 ISCOTCH=-I%{_incmpichdir}
-LSCOTCH="-L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+LSCOTCH=" -Wl,--as-needed -L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
 export MPIBLACSLIBS="-lmpiblacs"
 export MPI_COMPILER_NAME=mpich
@@ -268,7 +268,7 @@ make \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 rm -rf lib/*
@@ -299,8 +299,8 @@ make \
  LMETIS="-L%{_libdir} -lmetis" \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH=-I%{_includedir} \
- LSCOTCH="-L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
- OPTL="%{__global_ldflags} -Wl,-z,now" \
+ LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" \
  all
 #######################################################
 
@@ -507,6 +507,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libexecdir}/%{name}-%{version}/examples/
 
 %changelog
+* Fri Feb 12 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-12
+- Added linker flags to fix unused-direct-shlib-dependency
+
 * Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.1-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
