@@ -16,20 +16,30 @@
 
 ## Define if use openmpi/mpich or not
 %global with_openmpi 1
+%global with_mpicheck 1
 %global with_mpich 1
+
+# openblas Upstream supports the package only on these architectures.
+%ifarch  x86_64 %{ix86} armv7hl ppc64le
+%global with_openmp 1
+%else
+%global with_openmp 0
+%endif
 
 # No OpenMPI support on these arches
 # metis unavailable
 ExcludeArch: s390 s390x
 
 # No MPICH support on these arches
-%ifarch ppc64 ppc64le
+# OpenMPI tests failed - Memory issues ?
+%ifarch ppc64 ppc64le aarch64
 %global with_mpich 0
+%global with_mpicheck 0
 %endif
 
 Name: MUMPS
 Version: 5.0.1
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -50,6 +60,11 @@ Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 Patch3: %{name}-shared-seq.patch
 
+Patch4: %{name}-shared-pord-openmp.patch
+Patch5: %{name}-shared-openmp.patch
+Patch6: %{name}-shared-seq-openmp.patch
+Patch7: %{name}-examples-openmp.patch
+
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
 BuildRequires: metis-devel, scotch-devel, pkgconfig
 
@@ -66,7 +81,6 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: %{name}-common = %{version}-%{release}
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -76,7 +90,6 @@ including symbols used by MUMPS.
 Summary: The MUMPS common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: %{name}-common = %{version}-%{release}
 %description examples
 This package contains common illustrative 
 test programs about how MUMPS can be used.
@@ -87,6 +100,35 @@ Group: Development/Libraries
 BuildArch: noarch
 %description common
 This package contains common documentation files for MUMPS.
+
+########################################################
+%if 0%{?with_openmp}
+%package openmp
+Summary: MUMPS libraries with OpenMP support
+Group: Development/Libraries
+
+BuildRequires: openblas-devel
+Requires: %{name}-common = %{version}-%{release}
+%description openmp
+MUMPS libraries with OpenMP support.
+
+%package openmp-devel
+Summary: The MUMPS headers and development-related files
+Group: Development/Libraries
+Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
+Requires: %{name}-devel%{?_isa} = %{version}-%{release}
+%description openmp-devel
+Shared links, header files for MUMPS OpenMP.
+
+%package openmp-examples
+Summary: The MUMPS OpenMP common illustrative test programs
+Group: Development/Libraries
+Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
+%description openmp-examples
+This package contains common illustrative 
+test programs about how MUMPS-openmp can be used.
+%endif
+##########################################################
 
 ########################################################
 %if 0%{?with_openmpi}
@@ -101,16 +143,23 @@ BuildRequires: metis-devel, ptscotch-openmpi-devel
 
 Requires: %{name}-common = %{version}-%{release}
 %description openmpi
-MUMPS libraries compiled against openmpi
+MUMPS libraries compiled against openmpi.
 
 %package openmpi-devel
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: openmpi-devel
-Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 %description openmpi-devel
 Shared links, header files for MUMPS.
+
+%package openmpi-examples
+Summary: The MUMPS OpenMPI common illustrative test programs
+Group: Development/Libraries
+Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+%description openmpi-examples
+This package contains common illustrative 
+test programs about how MUMPS-openmpi can be used.
 %endif
 ##########################################################
 
@@ -127,16 +176,23 @@ BuildRequires: metis-devel, ptscotch-mpich-devel
 
 Requires: %{name}-common = %{version}-%{release}
 %description mpich
-MUMPS libraries compiled against MPICH
+MUMPS libraries compiled against MPICH.
 
 %package mpich-devel
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: mpich-devel
-Requires: %{name}-common = %{version}-%{release}
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 %description mpich-devel
 Shared links, header files for MUMPS.
+
+%package mpich-examples
+Summary: The MUMPS MPICH common illustrative test programs
+Group: Development/Libraries
+Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+%description mpich-examples
+This package contains common illustrative 
+test programs about how MUMPS-mpich can be used.
 %endif
 ##########################################################
 
@@ -174,7 +230,7 @@ cp -f %{SOURCE1} Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
@@ -205,6 +261,7 @@ export LD_LIBRARY_PATH="%{_libmpidir}"
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
+mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 make \
  CC=%{_libdir}/openmpi/bin/mpicc \
  FC=%{_libdir}/openmpi/bin/mpif77 \
@@ -217,8 +274,10 @@ make \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
+make -C examples
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
+cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
 rm -rf lib/*
 make clean
 %endif
@@ -238,7 +297,7 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpic_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
@@ -257,6 +316,7 @@ export LD_LIBRARY_PATH="%{_libmpichdir}"
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
+mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 make \
  CC=%{_libdir}/mpich/bin/mpicc \
  FC=%{_libdir}/mpich/bin/mpif77 \
@@ -269,8 +329,10 @@ make \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
+make -C examples
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
+cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
 rm -rf lib/*
 make clean
 %endif
@@ -284,8 +346,11 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} %{__global_ldflags} -Wl,-z,now -Dscotch -Dmetis|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -pthread|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+
+mkdir -p %{name}-%{version}/lib
+mkdir -p %{name}-%{version}/examples
 
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 make \
@@ -293,6 +358,7 @@ make \
  FC=gfortran \
  FL=gfortran \
  MUMPS_LIBF77="-L%{_libdir} -lblas -llapack" \
+ LIBOTHERS=" -lpthread" \
  LIBSEQ="-L../libseq -lmpiseq" \
  INCSEQ="-I../libseq" \
  LMETISDIR=%{_libdir} \
@@ -302,6 +368,60 @@ make \
  LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" \
  all
+make -C examples
+cp -pr lib/* %{name}-%{version}/lib
+cp -pr examples/* %{name}-%{version}/examples
+rm -rf lib/*
+make clean
+#######################################################
+
+## Build OpenMP version
+%if 0%{?with_openmp}
+
+patch -R -p0 < %{PATCH3}
+patch -R -p1 < %{PATCH2}
+patch -R -p1 < %{PATCH1}
+
+patch -p1 < %{PATCH4}
+patch -p1 < %{PATCH5}
+patch -p0 < %{PATCH6}
+patch -p0 < %{PATCH7}
+
+rm -f Makefile.inc
+cp -f %{SOURCE2} Makefile.inc
+
+# Set build flags macro
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -fopenmp -pthread|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed|g' -i Makefile.inc
+
+mkdir -p %{name}-%{version}-openmp/lib
+mkdir -p %{name}-%{version}-openmp/examples
+
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed"
+make \
+ CC=gcc \
+ FC=gfortran \
+ FL=gfortran \
+ MUMPS_LIBF77="-L%{_libdir} -lopenblaso -llapack" \
+ LIBBLAS="-L%{_libdir} -lopenblaso -llapack" \
+ LIBOTHERS=" -lpthread" \
+ LIBSEQ="-L../libseq -lmpiseq" \
+ INCSEQ="-I../libseq -I%{_includedir}/openblas" \
+ LMETISDIR=%{_libdir} \
+ LMETIS="-L%{_libdir} -lmetis" \
+ SCOTCHDIR=%{_prefix} \
+ ISCOTCH="-I%{_includedir}" \
+ LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ IPORD=" -I../PORD/include/" \
+ LPORD=" -L../PORD/lib -lpordo" \
+ OPTL="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed" \
+ all
+make -C examples
+cp -pr lib/* %{name}-%{version}-openmp/lib
+cp -pr examples/* %{name}-%{version}-openmp/examples
+rm -rf lib/*
+make clean
+%endif
 #######################################################
 
 # Make sure documentation is using Unicode.
@@ -310,10 +430,14 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
-%check
-# Running test programs showing how MUMPS can be used
-pushd examples
+%if 0%{?with_openmp}
+%post openmp -p /sbin/ldconfig
+%postun openmp -p /sbin/ldconfig
+%endif
 
+%check
+# Running test programs
+pushd %{name}-%{version}/examples
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./ssimpletest < input_simpletest_real
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
@@ -324,44 +448,62 @@ LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./zsimpletest < input_simpletest_cmplx
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./c_example
+popd
 
+%if 0%{?with_openmp}
+pushd %{name}-%{version}-openmp/examples
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./ssimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./dsimpletest < input_simpletest_real
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./csimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./zsimpletest < input_simpletest_cmplx
+LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+ ./c_example
+popd
+%endif
+
+%if 0%{?with_mpicheck}
 %if 0%{?with_openmpi}
-%if 0%{?rhel}
+%if 0%{?rhel} && 0%{?rhel} < 7
 module load %{_sysconfdir}/modulefiles/openmpi-%{_arch}
 %else
 %{_openmpi_load}
 %endif
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
- ./ssimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
- ./dsimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
- ./csimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
- ./zsimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-openmpi/lib:$LD_LIBRARY_PATH \
- ./c_example
+pushd %{name}-%{version}-openmpi/examples
+export LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH
+./ssimpletest < input_simpletest_real
+./dsimpletest < input_simpletest_real
+./csimpletest < input_simpletest_cmplx
+./zsimpletest < input_simpletest_cmplx
+mpirun -np 3 ./c_example
+popd
 %{_openmpi_unload}
 %endif
+%endif
 
+## Tests not perfomred due to 'gethostname' failure on koji
 %if 0%{?with_mpich}
 %if 0%{?rhel}
 module load %{_sysconfdir}/modulefiles/mpich-%{_arch}
 %else
 %{_mpich_load}
 %endif
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
- ./ssimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
- ./dsimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
- ./csimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
- ./zsimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../%{name}-%{version}-mpich/lib:$LD_LIBRARY_PATH \
- ./c_example
+#pushd %%{name}-%%{version}-mpich/examples
+#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+# ./ssimpletest < input_simpletest_real
+#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+# ./dsimpletest < input_simpletest_real
+#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+# ./csimpletest < input_simpletest_cmplx
+#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+# ./zsimpletest < input_simpletest_cmplx
+#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
+# ./c_example
+#popd
 %{_mpich_unload}
-cd ../
 %endif
 
 %install
@@ -369,7 +511,7 @@ cd ../
 #########################################################
 %if 0%{?with_openmpi}
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
-mkdir -p $RPM_BUILD_ROOT%{_libmpidir}/%{name}-%{version}/examples
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
 
 %{_openmpi_load}
@@ -391,7 +533,12 @@ ln -sf %{_libmpidir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
 ln -sf %{_libmpidir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
 ln -sf %{_libmpidir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
 
+install -cpm 755 %{name}-%{version}-openmpi/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
+install -cpm 755 %{name}-%{version}-openmpi/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
+install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
+
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
+install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
 %{_openmpi_unload}
 %endif
 ##########################################################
@@ -399,7 +546,7 @@ install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
 #########################################################
 %if 0%{?with_mpich}
 mkdir -p $RPM_BUILD_ROOT%{_libmpichdir}
-mkdir -p $RPM_BUILD_ROOT%{_libmpichdir}/%{name}-%{version}/examples
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpichdir}
 
 %{_mpich_load}
@@ -421,7 +568,12 @@ ln -sf %{_libmpichdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpich
 ln -sf %{_libmpichdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libmumps_common.so
 ln -sf %{_libmpichdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libpord.so
 
+install -cpm 755 %{name}-%{version}-mpich/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
+install -cpm 755 %{name}-%{version}-mpich/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
+install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
+
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpichdir}
+install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpichdir}
 %{_mpich_unload}
 %endif
 ##########################################################
@@ -431,14 +583,14 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 # Install libraries.
-install -cpm 755 lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
 
 # Install development files.
-install -cpm 755 lib/libmumps_common.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/lib*mumps.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 lib/libpord.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/libpord.so $RPM_BUILD_ROOT%{_libdir}
 
 # Make symbolic links instead hard-link 
 ln -sf %{_libdir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumps.so
@@ -448,11 +600,41 @@ ln -sf %{_libdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdm
 ln -sf %{_libdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumps_common.so
 ln -sf %{_libdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
 
+install -cpm 755 %{name}-%{version}/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 755 %{name}-%{version}/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 755 %{name}-%{version}/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+
+############################################################
+%if 0%{?with_openmp}
+mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+
+# Install libraries.
+install -cpm 755 %{name}-%{version}-openmp/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
+
+# Install development files.
+install -cpm 755 %{name}-%{version}-openmp/lib/libmumpso_common.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/libpordo.so $RPM_BUILD_ROOT%{_libdir}
+
+# Make symbolic links instead hard-link 
+ln -sf %{_libdir}/libsmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumpso.so
+ln -sf %{_libdir}/libcmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libcmumpso.so
+ln -sf %{_libdir}/libzmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libzmumpso.so
+ln -sf %{_libdir}/libdmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumpso.so
+ln -sf %{_libdir}/libmumpso_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumpso_common.so
+ln -sf %{_libdir}/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpordo.so
+
+install -cpm 755 %{name}-%{version}-openmp/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+install -cpm 755 %{name}-%{version}-openmp/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+install -cpm 755 %{name}-%{version}-openmp/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+%endif
+##############################################################
+
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
-
-install -cpm 755 examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
-install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 #######################################################
 %if 0%{?with_openmpi}
@@ -466,6 +648,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libmpidir}/lib?mumps.so
 %{_libmpidir}/libmumps_common.so
 %{_libmpidir}/libpord.so
+
+%files openmpi-examples
+%{_libexecdir}/%{name}-%{version}-openmpi/
 %endif
 #######################################################
 
@@ -481,6 +666,9 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libmpichdir}/lib?mumps.so
 %{_libmpichdir}/libmumps_common.so
 %{_libmpichdir}/libpord.so
+
+%files mpich-examples
+%{_libexecdir}/%{name}-%{version}-mpich/
 %endif
 #######################################################
 
@@ -496,17 +684,36 @@ install -cpm 755 examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{versio
 %{_libdir}/libmumps_common.so
 %{_libdir}/libpord.so
 
+%files examples
+%{_libexecdir}/%{name}-%{version}/
+
+#######################################################
+%if 0%{?with_openmp}
+%files openmp
+%{_libdir}/libpordo-%{soname_version}.so
+%{_libdir}/lib?mumpso-%{soname_version}.so
+%{_libdir}/libmumpso_common-%{soname_version}.so
+
+%files openmp-devel
+%{_libdir}/lib?mumpso.so
+%{_libdir}/libmumpso_common.so
+%{_libdir}/libpordo.so
+
+%files openmp-examples
+%{_libexecdir}/%{name}-%{version}-openmp/
+%endif
+#######################################################
+
 %files common
 %{!?_licensedir:%global license %doc}
-%doc examples/README-examples
 %doc doc/*.pdf ChangeLog README
 %license LICENSE
 
-%files examples
-%dir %{_libexecdir}/%{name}-%{version}
-%{_libexecdir}/%{name}-%{version}/examples/
-
 %changelog
+* Sun Mar 20 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-13
+- Rebuild for Metis
+- Compiled with OpenMP support (bz#1319477)
+
 * Fri Feb 12 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-12
 - Added linker flags to fix unused-direct-shlib-dependency
 

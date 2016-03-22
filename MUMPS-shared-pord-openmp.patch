@@ -1,0 +1,79 @@
+Create static and shared versions of the PORD library.
+
+Index: mumps/PORD/lib/Makefile
+===================================================================
+--- mumps.orig/PORD/lib/Makefile
++++ mumps/PORD/lib/Makefile
+@@ -9,7 +9,7 @@
+ 
+ INCLUDES = -I../include
+ 
+-COPTIONS = $(INCLUDES) $(CFLAGS) $(OPTFLAGS)
++COPTIONS = $(INCLUDES) $(CFLAGS) $(OPTFLAGS) -fPIC
+ 
+ OBJS = graph.o gbipart.o gbisect.o ddcreate.o ddbisect.o nestdiss.o \
+        multisector.o gelim.o bucket.o tree.o \
+@@ -24,12 +24,16 @@
+ .c.o:
+ 	$(CC) $(COPTIONS) -c $*.c $(OUTC)$*.o
+ 
+-libpord$(LIBEXT):$(OBJS)
+-	$(AR)$@ $(OBJS)
++libpordo$(PLAT).a:$(OBJS)
++	$(AR) $@ $(OBJS)
+ 	$(RANLIB) $@
+ 
++libpordo$(PLAT).so: $(OBJS)
++	$(CC) -shared $(OBJS) -Wl,-soname,libpordo$(PLAT)-5.0.0.so -o libpordo$(PLAT)-5.0.0.so $(OPTL) -Wl,-z,defs
++	ln -s libpordo$(PLAT)-5.0.0.so $@
++
+ clean:
+ 	rm -f *.o
+ 
+ realclean:
+-	rm -f *.o libpord.a
++	rm -f *.o libpordo*.a *.so
+Index: mumps/Makefile
+===================================================================
+--- mumps.orig/Makefile
++++ mumps/Makefile
+@@ -51,7 +51,7 @@
+ dexamples:	d
+ 	(cd examples ; $(MAKE) d)
+ 
+-requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT)$(LIBEXT)
++requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpordo$(PLAT).a $(libdir)/libpordo$(PLAT).so
+ 
+ # dummy MPI library (sequential version)
+ 
+@@ -59,19 +59,26 @@
+ 	(cd libseq; $(MAKE))
+ 
+ # Build the libpord.a library and copy it into $(topdir)/lib
+-$(libdir)/libpord$(PLAT)$(LIBEXT):
++$(libdir)/libpordo$(PLAT).a:
+ 	if [ "$(LPORDDIR)" != "" ] ; then \
+ 	  cd $(LPORDDIR); \
+ 	  $(MAKE) CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" RANLIB="$(RANLIB)" OUTC="$(OUTC)" LIBEXT=$(LIBEXT); \
+ 	fi;
+ 	if [ "$(LPORDDIR)" != "" ] ; then \
+-	  cp $(LPORDDIR)/libpord$(LIBEXT) $@; \
++	  cp $(LPORDDIR)/libpordo$(PLAT).a $@; \
+ 	fi;
+ 
++$(libdir)/libpordo$(PLAT).so:
++	if [ "$(LPORDDIR)" != "" ] ; then \
++	cd $(LPORDDIR); make CC="$(CC)" CFLAGS="$(OPTC)" AR="$(AR)" ARFUNCT= RANLIB="$(RANLIB)" libpordo$(PLAT).so; fi;
++	if [ "$(LPORDDIR)" != "" ] ; then \
++	cp -a $(LPORDDIR)/libpordo*.so lib/; fi;
++
++
+ clean:
+ 	(cd src; $(MAKE) clean)
+ 	(cd examples; $(MAKE) clean)
+-	(cd $(libdir); $(RM) *$(PLAT)$(LIBEXT))
++	(cd $(libdir); $(RM) *$(PLAT).a *$(PLAT).so)
+ 	(cd libseq; $(MAKE) clean)
+ 	if [ "$(LPORDDIR)" != "" ] ; then \
+ 	  cd $(LPORDDIR); $(MAKE) realclean; \
+
