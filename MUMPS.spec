@@ -39,7 +39,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 13%{?dist}
+Release: 15%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -91,7 +91,7 @@ Summary: The MUMPS common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 %description examples
-This package contains common illustrative 
+This package contains common illustrative
 test programs about how MUMPS can be used.
 
 %package common
@@ -125,7 +125,7 @@ Summary: The MUMPS OpenMP common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 %description openmp-examples
-This package contains common illustrative 
+This package contains common illustrative
 test programs about how MUMPS-openmp can be used.
 %endif
 ##########################################################
@@ -158,7 +158,7 @@ Summary: The MUMPS OpenMPI common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 %description openmpi-examples
-This package contains common illustrative 
+This package contains common illustrative
 test programs about how MUMPS-openmpi can be used.
 %endif
 ##########################################################
@@ -191,7 +191,7 @@ Summary: The MUMPS MPICH common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 %description mpich-examples
-This package contains common illustrative 
+This package contains common illustrative
 test programs about how MUMPS-mpich can be used.
 %endif
 ##########################################################
@@ -222,42 +222,42 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpic_libs %(env PKG_CONFIG_PATH=%{_libmpidir}/pkgconfig pkg-config --libs ompi)
 %endif
 %if 0%{?rhel}
-%global mpif77_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
-%global mpif77_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_mpifh
-%global mpifort_cflags -pthread -I%{_libmpidir} -I%{_incmpidir}
-%global mpifort_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi_mpifh
-%global mpic_libs -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} -lmpi
+%global mpif77_cflags -I%{_incmpidir}
+%global mpif77_libs -lmpi_mpifh
+%global mpifort_cflags -I%{_incmpidir}
+%global mpifort_libs -lmpi_mpifh
+%global mpic_libs -lmpi
 %endif
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -pthread|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 ## EPEL6 provides OpenMPI 1.8.1
 ## EPEL7 provides OpenMPI 1.10.0
 %if 0%{?rhel} && 0%{?rhel} < 7
-sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
 %endif
 %if 0%{?rhel} && 0%{?rhel} >= 7
-sed -e 's|@@MPIFORTRANLIB@@|%{mpif77_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
 %endif
 
 %if 0%{?fedora}
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_incmpidir}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libdir}/openmpi
+SCOTCHDIR=%{_libmpidir}
 ISCOTCH=-I%{_incmpidir}
-LSCOTCH="-L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+LSCOTCH=" -Wl,--as-needed -L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
-export MPIBLACSLIBS="-lmpiblacs"
+export MPIBLACSLIBS="-L%{_libmpidir} -lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
-export LD_LIBRARY_PATH="%{_libmpidir}"
+export LD_LIBRARY_PATH="%{_libmpidir}:%{_libdir}"
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -268,13 +268,12 @@ make \
  FL=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77=" -Wl,--as-needed -L%{_libdir}/openmpi %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpic_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
-make -C examples
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -294,25 +293,25 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpif77_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 %global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --cflags mpich)
 %global mpifort_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
-%global mpic_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
+%global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
 MUMPS_MPI=mpich
 MUMPS_INCDIR=-I%{_incmpichdir}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libdir}/mpich
+SCOTCHDIR=%{_libmpichdir}
 ISCOTCH=-I%{_incmpichdir}
 LSCOTCH=" -Wl,--as-needed -L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
-export MPIBLACSLIBS="-lmpiblacs"
+export MPIBLACSLIBS="-L%{_libmpichdir} -lmpiblacs"
 export MPI_COMPILER_NAME=mpich
-export LD_LIBRARY_PATH="%{_libmpichdir}"
+export LD_LIBRARY_PATH=%{_libmpichdir}:%{_libdir}
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -323,13 +322,12 @@ make \
  FL=%{_libdir}/mpich/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir}/mpich %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpichdir} %{mpich_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
-make -C examples
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -710,6 +708,12 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-15
+- Fixed linker flags
+
+* Tue Mar 22 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-14
+- Fixed MPI paths
+
 * Sun Mar 20 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-13
 - Rebuild for Metis
 - Compiled with OpenMP support (bz#1319477)
