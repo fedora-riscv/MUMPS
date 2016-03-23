@@ -39,7 +39,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 17%{?dist}
+Release: 18%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -531,7 +531,7 @@ module load %{_sysconfdir}/modulefiles/mpich-%{_arch}
 #########################################################
 %if 0%{?with_openmpi}
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
-mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
 
 %{_openmpi_load}
@@ -553,9 +553,9 @@ ln -sf %{_libmpidir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
 ln -sf %{_libmpidir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
 ln -sf %{_libmpidir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
 
-install -cpm 755 %{name}-%{version}-openmpi/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
-install -cpm 755 %{name}-%{version}-openmpi/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
-install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmpi/examples
+install -cpm 755 %{name}-%{version}-openmpi/examples/?simpletest $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
+install -cpm 755 %{name}-%{version}-openmpi/examples/input_* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
+install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
@@ -566,7 +566,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
 #########################################################
 %if 0%{?with_mpich}
 mkdir -p $RPM_BUILD_ROOT%{_libmpichdir}
-mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpichdir}
 
 %{_mpich_load}
@@ -588,9 +588,9 @@ ln -sf %{_libmpichdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpich
 ln -sf %{_libmpichdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libmumps_common.so
 ln -sf %{_libmpichdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libpord.so
 
-install -cpm 755 %{name}-%{version}-mpich/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
-install -cpm 755 %{name}-%{version}-mpich/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
-install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-mpich/examples
+install -cpm 755 %{name}-%{version}-mpich/examples/?simpletest $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
+install -cpm 755 %{name}-%{version}-mpich/examples/input_* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
+install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpichdir}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpichdir}
@@ -670,7 +670,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpidir}/libpord.so
 
 %files openmpi-examples
-%{_libexecdir}/%{name}-%{version}-openmpi/
+%{_libdir}/openmpi/%{name}-%{version}-examples/
 %endif
 #######################################################
 
@@ -688,7 +688,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpichdir}/libpord.so
 
 %files mpich-examples
-%{_libexecdir}/%{name}-%{version}-mpich/
+%{_libdir}/mpich/%{name}-%{version}-examples/
 %endif
 #######################################################
 
@@ -730,6 +730,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-18
+- Examples directory moved under /usr/lib/openmpi(mpich)
+
 * Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-17
 - Added rpm-mpi-hooks as BR in examples sub-packages
 - Added openmpi/mpich as Requires package
