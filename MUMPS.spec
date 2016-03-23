@@ -39,7 +39,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 15%{?dist}
+Release: 16%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -67,6 +67,7 @@ Patch7: %{name}-examples-openmp.patch
 
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
 BuildRequires: metis-devel, scotch-devel, pkgconfig
+BuildRequires: rpm-mpi-hooks
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -81,6 +82,7 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -108,6 +110,7 @@ Summary: MUMPS libraries with OpenMP support
 Group: Development/Libraries
 
 BuildRequires: openblas-devel
+BuildRequires: rpm-mpi-hooks
 Requires: %{name}-common = %{version}-%{release}
 %description openmp
 MUMPS libraries with OpenMP support.
@@ -117,6 +120,7 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description openmp-devel
 Shared links, header files for MUMPS OpenMP.
 
@@ -140,6 +144,7 @@ BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
 BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel, ptscotch-openmpi-devel
+BuildRequires: rpm-mpi-hooks
 
 Requires: %{name}-common = %{version}-%{release}
 %description openmpi
@@ -150,6 +155,7 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description openmpi-devel
 Shared links, header files for MUMPS.
 
@@ -157,6 +163,7 @@ Shared links, header files for MUMPS.
 Summary: The MUMPS OpenMPI common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description openmpi-examples
 This package contains common illustrative
 test programs about how MUMPS-openmpi can be used.
@@ -173,6 +180,7 @@ BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
 BuildRequires: scalapack-mpich-devel
 BuildRequires: metis-devel, ptscotch-mpich-devel
+BuildRequires: rpm-mpi-hooks
 
 Requires: %{name}-common = %{version}-%{release}
 %description mpich
@@ -183,6 +191,7 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: mpich-devel
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description mpich-devel
 Shared links, header files for MUMPS.
 
@@ -190,6 +199,7 @@ Shared links, header files for MUMPS.
 Summary: The MUMPS MPICH common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+Requires: rpm-mpi-hooks
 %description mpich-examples
 This package contains common illustrative
 test programs about how MUMPS-mpich can be used.
@@ -708,6 +718,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-16
+- Added rpm-mpi-hooks dependencies
+
 * Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-15
 - Fixed linker flags
 
