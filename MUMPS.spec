@@ -39,7 +39,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 14%{?dist}
+Release: 15%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -244,20 +244,20 @@ sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif7
 %endif
 
 %if 0%{?fedora}
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
 MUMPS_INCDIR=-I%{_incmpidir}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libdir}/openmpi
+SCOTCHDIR=%{_libmpidir}
 ISCOTCH=-I%{_incmpidir}
-LSCOTCH="-L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+LSCOTCH=" -Wl,--as-needed -L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
-export MPIBLACSLIBS="-lmpiblacs"
+export MPIBLACSLIBS="-L%{_libmpidir} -lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
-export LD_LIBRARY_PATH="%{_libmpidir}"
+export LD_LIBRARY_PATH="%{_libmpidir}:%{_libdir}"
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -268,13 +268,12 @@ make \
  FL=%{_libdir}/openmpi/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77=" -Wl,--as-needed -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpic_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
-make -C examples
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -294,25 +293,25 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpif77_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 %global mpifort_cflags %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --cflags mpich)
 %global mpifort_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
-%global mpic_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
+%global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
 MUMPS_MPI=mpich
 MUMPS_INCDIR=-I%{_incmpichdir}
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libdir}/mpich
+SCOTCHDIR=%{_libmpichdir}
 ISCOTCH=-I%{_incmpichdir}
 LSCOTCH=" -Wl,--as-needed -L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 
-export MPIBLACSLIBS="-lmpiblacs"
+export MPIBLACSLIBS="-L%{_libmpichdir} -lmpiblacs"
 export MPI_COMPILER_NAME=mpich
-export LD_LIBRARY_PATH="%{_libmpichdir}"
+export LD_LIBRARY_PATH=%{_libmpichdir}:%{_libdir}
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -323,13 +322,12 @@ make \
  FL=%{_libdir}/mpich/bin/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libmpichdir} %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
+ MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpichdir} %{mpich_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
-make -C examples
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -710,6 +708,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-15
+- Fixed linker flags
+
 * Tue Mar 22 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-14
 - Fixed MPI paths
 
