@@ -67,7 +67,6 @@ Patch7: %{name}-examples-openmp.patch
 
 BuildRequires: gcc-gfortran, blas-devel, lapack-devel
 BuildRequires: metis-devel, scotch-devel, pkgconfig
-BuildRequires: rpm-mpi-hooks
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -82,7 +81,6 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
-Requires: rpm-mpi-hooks
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -110,7 +108,6 @@ Summary: MUMPS libraries with OpenMP support
 Group: Development/Libraries
 
 BuildRequires: openblas-devel
-BuildRequires: rpm-mpi-hooks
 Requires: %{name}-common = %{version}-%{release}
 %description openmp
 MUMPS libraries with OpenMP support.
@@ -120,7 +117,6 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Requires: rpm-mpi-hooks
 %description openmp-devel
 Shared links, header files for MUMPS OpenMP.
 
