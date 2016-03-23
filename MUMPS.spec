@@ -39,7 +39,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.1
-Release: 16%{?dist}
+Release: 17%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -140,9 +140,12 @@ BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
 BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel, ptscotch-openmpi-devel
+%if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
-
+%endif
 Requires: %{name}-common = %{version}-%{release}
+Requires: openmpi
+
 %description openmpi
 MUMPS libraries compiled against openmpi.
 
@@ -151,7 +154,9 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+%if 0%{?fedora}
 Requires: rpm-mpi-hooks
+%endif
 %description openmpi-devel
 Shared links, header files for MUMPS.
 
@@ -159,7 +164,11 @@ Shared links, header files for MUMPS.
 Summary: The MUMPS OpenMPI common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
-Requires: rpm-mpi-hooks
+Requires: openmpi
+%if 0%{?fedora}
+BuildRequires: rpm-mpi-hooks
+%endif
+
 %description openmpi-examples
 This package contains common illustrative
 test programs about how MUMPS-openmpi can be used.
@@ -176,9 +185,11 @@ BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
 BuildRequires: scalapack-mpich-devel
 BuildRequires: metis-devel, ptscotch-mpich-devel
+%if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
-
+%endif
 Requires: %{name}-common = %{version}-%{release}
+Requires: mpich
 %description mpich
 MUMPS libraries compiled against MPICH.
 
@@ -187,7 +198,9 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: mpich-devel
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+%if 0%{?fedora}
 Requires: rpm-mpi-hooks
+%endif
 %description mpich-devel
 Shared links, header files for MUMPS.
 
@@ -195,7 +208,10 @@ Shared links, header files for MUMPS.
 Summary: The MUMPS MPICH common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
-Requires: rpm-mpi-hooks
+Requires: mpich
+%if 0%{?fedora}
+BuildRequires: rpm-mpi-hooks
+%endif
 %description mpich-examples
 This package contains common illustrative
 test programs about how MUMPS-mpich can be used.
@@ -714,6 +730,10 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-17
+- Added rpm-mpi-hooks as BR in examples sub-packages
+- Added openmpi/mpich as Requires package
+
 * Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-16
 - Added rpm-mpi-hooks dependencies
 
