@@ -30,16 +30,9 @@
 # metis unavailable
 ExcludeArch: s390 s390x
 
-# No MPICH support on these arches
-# OpenMPI tests failed - Memory issues ?
-%ifarch ppc64 ppc64le aarch64
-%global with_mpich 0
-%global with_mpicheck 0
-%endif
-
 Name: MUMPS
 Version: 5.0.1
-Release: 18%{?dist}
+Release: 19%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -730,6 +723,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Mon Apr  4 2016 Peter Robinson <pbrobinson@fedoraproject.org> 5.0.1-19
+- aarch64/Power64 have mpich/openmpi now
+
 * Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-18
 - Examples directory moved under /usr/lib/openmpi(mpich)
 
