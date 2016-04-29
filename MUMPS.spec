@@ -1,7 +1,3 @@
-%if 0%{?fedora} <= 22
-%global _hardened_build 1
-%endif
-
 %if 0%{?rhel} < 7
 %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
 %endif
@@ -30,16 +26,17 @@
 # metis unavailable
 ExcludeArch: s390 s390x
 
-# No MPICH support on these arches
-# OpenMPI tests failed - Memory issues ?
-%ifarch ppc64 ppc64le aarch64
+# Missing packages on el6
+%if 0%{?rhel} && 0%{?rhel} < 7
+%ifarch ppc64
 %global with_mpich 0
 %global with_mpicheck 0
+%endif
 %endif
 
 Name: MUMPS
 Version: 5.0.1
-Release: 18%{?dist}
+Release: 20%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -65,8 +62,12 @@ Patch5: %{name}-shared-openmp.patch
 Patch6: %{name}-shared-seq-openmp.patch
 Patch7: %{name}-examples-openmp.patch
 
-BuildRequires: gcc-gfortran, blas-devel, lapack-devel
-BuildRequires: metis-devel, scotch-devel, pkgconfig
+BuildRequires: gcc-gfortran
+BuildRequires: blas-devel
+BuildRequires: lapack-devel
+BuildRequires: metis-devel
+BuildRequires: scotch-devel
+BuildRequires: pkgconfig
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -730,6 +731,12 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Fri Apr 29 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-20
+- Build MPICH libraries on PPC64* except EPEL6
+
+* Mon Apr 04 2016 Peter Robinson <pbrobinson@fedoraproject.org> - 5.0.1-19
+- aarch64/Power64 have mpich/openmpi now
+
 * Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-18
 - Examples directory moved under /usr/lib/openmpi(mpich)
 
