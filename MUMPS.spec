@@ -8,7 +8,7 @@
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version 5.0.0
+%global soname_version 5.0.2
 
 ## Define if use openmpi/mpich or not
 %global with_openmpi 1
@@ -35,8 +35,8 @@ ExcludeArch: s390 s390x
 %endif
 
 Name: MUMPS
-Version: 5.0.1
-Release: 20%{?dist}
+Version: 5.0.2
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -277,6 +277,8 @@ LMETIS="-L%{_libdir} -lmetis"
 SCOTCHDIR=%{_libmpidir}
 ISCOTCH=-I%{_incmpidir}
 LSCOTCH=" -Wl,--as-needed -L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+IPORD=" -I$PWD/PORD/include/"
+LPORD=" -L$PWD/PORD/lib -lpord"
 
 export MPIBLACSLIBS="-L%{_libmpidir} -lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
@@ -296,6 +298,8 @@ make \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
+ IPORD="$IPORD" \
+ LPORD="$LPORD" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -331,6 +335,8 @@ LMETIS="-L%{_libdir} -lmetis"
 SCOTCHDIR=%{_libmpichdir}
 ISCOTCH=-I%{_incmpichdir}
 LSCOTCH=" -Wl,--as-needed -L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+IPORD=" -I$PWD/PORD/include/"
+LPORD=" -L$PWD/PORD/lib -lpord"
 
 export MPIBLACSLIBS="-L%{_libmpichdir} -lmpiblacs"
 export MPI_COMPILER_NAME=mpich
@@ -350,6 +356,8 @@ make \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
+ IPORD="$IPORD" \
+ LPORD="$LPORD" \
  OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
@@ -373,6 +381,9 @@ sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.i
 mkdir -p %{name}-%{version}/lib
 mkdir -p %{name}-%{version}/examples
 
+IPORD=" -I$PWD/PORD/include/"
+LPORD=" -L$PWD/PORD/lib -lpord"
+
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 make \
  CC=gcc \
@@ -387,8 +398,9 @@ make \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH=-I%{_includedir} \
  LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
- OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" \
- all
+ IPORD="$IPORD" \
+ LPORD="$LPORD" \
+ OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
 make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
@@ -418,6 +430,9 @@ sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed|g' -
 mkdir -p %{name}-%{version}-openmp/lib
 mkdir -p %{name}-%{version}-openmp/examples
 
+IPORD=" -I$PWD/PORD/include/"
+LPORD=" -L$PWD/PORD/lib -lpordo"
+
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed"
 make \
  CC=gcc \
@@ -433,10 +448,9 @@ make \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH="-I%{_includedir}" \
  LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
- IPORD=" -I../PORD/include/" \
- LPORD=" -L../PORD/lib -lpordo" \
- OPTL="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed" \
- all
+ IPORD="$IPORD" \
+ LPORD="$LPORD" \
+ OPTL="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed" all
 make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
@@ -505,26 +519,8 @@ popd
 %endif
 %endif
 
-## Tests not perfomred due to 'gethostname' failure on koji
 %if 0%{?with_mpich}
-%if 0%{?rhel}
-module load %{_sysconfdir}/modulefiles/mpich-%{_arch}
-%else
-%{_mpich_load}
-%endif
-#pushd %%{name}-%%{version}-mpich/examples
-#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
-# ./ssimpletest < input_simpletest_real
-#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
-# ./dsimpletest < input_simpletest_real
-#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
-# ./csimpletest < input_simpletest_cmplx
-#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
-# ./zsimpletest < input_simpletest_cmplx
-#LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
-# ./c_example
-#popd
-%{_mpich_unload}
+## Tests not perfomred due to 'gethostname' failure on koji
 %endif
 
 %install
@@ -731,6 +727,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Mon Jul 18 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-1
+- Update to 5.0.2
+
 * Fri Apr 29 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-20
 - Build MPICH libraries on PPC64* except EPEL6
 
