@@ -36,7 +36,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -727,6 +727,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Mon Oct 31 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-3
+- New architectures
+
 * Fri Oct 21 2016 Orion Poplawski <orion@cora.nwra.com> - 5.0.2-2
 - Rebuild for openmpi 2.0
 
