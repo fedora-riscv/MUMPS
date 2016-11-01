@@ -11,7 +11,6 @@
 %global soname_version 5.0.2
 
 ## Define if use openmpi/mpich or not
-%global with_openmpi 1
 %global with_mpicheck 1
 %global with_mpich 1
 
@@ -22,9 +21,29 @@
 %global with_openmp 0
 %endif
 
-# No OpenMPI support on these arches
-# metis unavailable
-ExcludeArch: s390 s390x
+%if 0%{?rhel} || 0%{?rhel} < 7
+%ifarch %{power64}
+%global with_mpicheck 0
+%global with_mpich 0
+%endif
+%endif
+%if 0%{?rhel} || 0%{?rhel} < 7
+%ifnarch %{power64}
+%global with_mpicheck 1
+%global with_mpich 1
+%endif
+%endif
+%if 0%{?fedora} || 0%{?rhel} >= 7
+%global with_mpicheck 1
+%global with_mpich 1
+%endif
+
+%ifarch s390x
+%global with_openmpi 0
+%else
+%global with_openmpi 1
+%global with_mpicheck 1
+%endif
 
 # Missing packages on el6
 %if 0%{?rhel} && 0%{?rhel} < 7
@@ -36,7 +55,7 @@ ExcludeArch: s390 s390x
 
 Name: MUMPS
 Version: 5.0.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -727,6 +746,10 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Tue Nov 01 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-4
+- Build on s390
+- Rebuild on epel
+
 * Mon Oct 31 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-3
 - New architectures
 
