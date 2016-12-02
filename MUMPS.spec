@@ -45,6 +45,15 @@
 %global with_mpicheck 1
 %endif
 
+%ifarch s390x
+%if 0%{?fedora} >= 26
+%global with_mpich 1
+%else
+%global with_mpich 0
+%global with_mpicheck 1
+%endif
+%endif
+
 # Missing packages on el6
 %if 0%{?rhel} && 0%{?rhel} < 7
 %ifarch ppc64
@@ -55,7 +64,7 @@
 
 Name: MUMPS
 Version: 5.0.2
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -746,6 +755,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Fri Dec 02 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-5
+- Fix MPICH builds on s390
+
 * Tue Nov 01 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-4
 - Build on s390
 - Rebuild on epel
