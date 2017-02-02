@@ -95,7 +95,6 @@ BuildRequires: blas-devel
 BuildRequires: lapack-devel
 BuildRequires: metis-devel
 BuildRequires: scotch-devel
-BuildRequires: pkgconfig
 
 BuildRequires: openssh-clients
 Requires:      %{name}-common = %{version}-%{release}
@@ -110,6 +109,7 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: gcc-gfortran%{?_isa}
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -183,6 +183,7 @@ Summary: The MUMPS headers and development-related files
 Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
+Requires: gcc-gfortran%{?_isa}
 %if 0%{?fedora}
 Requires: rpm-mpi-hooks
 %endif
@@ -237,6 +238,7 @@ Shared links, header files for MUMPS.
 Summary: The MUMPS MPICH common illustrative test programs
 Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+Requires: gcc-gfortran%{?_isa}
 Requires: mpich
 %if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
@@ -281,7 +283,7 @@ cp -f %{SOURCE1} Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -pthread|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -pthread -I%{_fmoddir}|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
@@ -315,6 +317,7 @@ export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
+mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make \
  CC=%{_libdir}/openmpi/bin/mpicc \
  FC=%{_libdir}/openmpi/bin/mpif77 \
@@ -333,6 +336,7 @@ make \
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
 rm -rf lib/*
+cp -pr src/*.mod %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make clean
 %endif
 
@@ -351,7 +355,7 @@ cp -f %{SOURCE1} Makefile.inc
 %global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -I%{_fmoddir}|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
@@ -373,6 +377,7 @@ export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
+mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make \
  CC=%{_libdir}/mpich/bin/mpicc \
  FC=%{_libdir}/mpich/bin/mpif77 \
@@ -391,6 +396,7 @@ make \
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
 rm -rf lib/*
+cp -pr src/*.mod %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make clean
 %endif
 
@@ -403,11 +409,12 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -pthread|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -pthread -I%{_fmoddir}|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}/lib
 mkdir -p %{name}-%{version}/examples
+mkdir -p %{name}-%{version}/modules
 
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
@@ -433,6 +440,7 @@ make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
 rm -rf lib/*
+cp -pr src/*.mod %{name}-%{version}/modules
 make clean
 #######################################################
 
@@ -452,11 +460,12 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -fopenmp -pthread|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -fopenmp -pthread -I%{_fmoddir}|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}-openmp/lib
 mkdir -p %{name}-%{version}-openmp/examples
+mkdir -p %{name}-%{version}-openmp/modules
 
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpordo"
@@ -483,6 +492,7 @@ make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
 rm -rf lib/*
+cp -pr src/*.mod %{name}-%{version}-openmp/modules
 make clean
 %endif
 #######################################################
@@ -558,6 +568,7 @@ popd
 mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
+mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/openmpi/%{name}-%{version}
 
 %{_openmpi_load}
 # Install libraries.
@@ -584,6 +595,7 @@ install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
+install -cpm 644 %{name}-%{version}-openmpi/modules/* $RPM_BUILD_ROOT%{_fmoddir}/openmpi/%{name}-%{version}/
 %{_openmpi_unload}
 %endif
 ##########################################################
@@ -593,6 +605,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
 mkdir -p $RPM_BUILD_ROOT%{_libmpichdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 mkdir -p $RPM_BUILD_ROOT%{_incmpichdir}
+mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/mpich/%{name}-%{version}
 
 %{_mpich_load}
 # Install libraries.
@@ -619,6 +632,7 @@ install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_li
 
 install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpichdir}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpichdir}
+install -cpm 644 %{name}-%{version}-mpich/modules/* $RPM_BUILD_ROOT%{_fmoddir}/mpich/%{name}-%{version}/
 %{_mpich_unload}
 %endif
 ##########################################################
@@ -626,6 +640,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpichdir}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
+mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/%{name}-%{version}
 
 # Install libraries.
 install -cpm 755 %{name}-%{version}/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
@@ -648,10 +663,12 @@ ln -sf %{_libdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpord
 install -cpm 755 %{name}-%{version}/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 %{name}-%{version}/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 %{name}-%{version}/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
+install -cpm 644 %{name}-%{version}/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-%{version}/
 
 ############################################################
 %if 0%{?with_openmp}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}
 
 # Install libraries.
 install -cpm 755 %{name}-%{version}-openmp/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
@@ -674,6 +691,7 @@ ln -sf %{_libdir}/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpor
 install -cpm 755 %{name}-%{version}-openmp/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 install -cpm 755 %{name}-%{version}-openmp/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 install -cpm 755 %{name}-%{version}-openmp/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
+install -cpm 644 %{name}-%{version}-openmp/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}/
 %endif
 ##############################################################
 
@@ -693,6 +711,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpidir}/lib?mumps.so
 %{_libmpidir}/libmumps_common.so
 %{_libmpidir}/libpord.so
+%{_fmoddir}/openmpi/%{name}-%{version}/
 
 %files openmpi-examples
 %{_libdir}/openmpi/%{name}-%{version}-examples/
@@ -711,6 +730,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpichdir}/lib?mumps.so
 %{_libmpichdir}/libmumps_common.so
 %{_libmpichdir}/libpord.so
+%{_fmoddir}/mpich/%{name}-%{version}/
 
 %files mpich-examples
 %{_libdir}/mpich/%{name}-%{version}-examples/
@@ -725,6 +745,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %files devel
 %dir %{_includedir}/%{name}
 %{_includedir}/%{name}/*.h
+%{_fmoddir}/%{name}-%{version}/
 %{_libdir}/lib?mumps.so
 %{_libdir}/libmumps_common.so
 %{_libdir}/libpord.so
@@ -743,6 +764,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libdir}/lib?mumpso.so
 %{_libdir}/libmumpso_common.so
 %{_libdir}/libpordo.so
+%{_fmoddir}/%{name}-openmp-%{version}/
 
 %files openmp-examples
 %{_libexecdir}/%{name}-%{version}-openmp/
@@ -756,7 +778,8 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 %changelog
 * Tue Jan 31 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-6
-- Rebuild for gcc-gfortran 
+- Rebuild for gcc-gfortran
+- Include Fortran modules
 
 * Fri Dec 02 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-5
 - Fix MPICH builds on s390
