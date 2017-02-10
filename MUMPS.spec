@@ -64,7 +64,7 @@
 
 Name: MUMPS
 Version: 5.0.2
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -777,6 +777,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.2-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Tue Jan 31 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-6
 - Rebuild for gcc-gfortran
 - Include Fortran modules
