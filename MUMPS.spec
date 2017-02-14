@@ -10,10 +10,6 @@
 
 %global soname_version 5.0.2
 
-## Define if use openmpi/mpich or not
-%global with_mpicheck 1
-%global with_mpich 1
-
 # openblas Upstream supports the package only on these architectures.
 %ifarch  x86_64 %{ix86} armv7hl ppc64le
 %global with_openmp 1
@@ -36,13 +32,16 @@
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %global with_mpicheck 1
 %global with_mpich 1
+%global with_openmpi 1
 %endif
 
 %ifarch s390x
-%global with_openmpi 0
-%else
+%if 0%{?fedora} >= 26
 %global with_openmpi 1
+%else
+%global with_openmpi 0
 %global with_mpicheck 1
+%endif
 %endif
 
 %ifarch s390x
@@ -64,7 +63,7 @@
 
 Name: MUMPS
 Version: 5.0.2
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -777,6 +776,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Tue Feb 14 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-8
+- Build OpenMPI version on Fedora26-s390
+
 * Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.2-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
