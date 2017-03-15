@@ -11,7 +11,8 @@
 %global soname_version 5.0.2
 
 # openblas Upstream supports the package only on these architectures.
-%ifarch  x86_64 %{ix86} armv7hl ppc64le
+%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
+%ifarch %{openblas_arches}
 %global with_openmp 1
 %else
 %global with_openmp 0
@@ -63,7 +64,7 @@
 
 Name: MUMPS
 Version: 5.0.2
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -776,6 +777,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Mar 15 2017 Orion Poplawski <orion@cora.nwra.com> - 5.0.2-9
+- Build with openblas on all available architectures
+
 * Tue Feb 14 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-8
 - Build OpenMPI version on Fedora26-s390
 
