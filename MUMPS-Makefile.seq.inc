@@ -82,7 +82,7 @@ METISLIB = -lmetis
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = @@CFLAGS@@ -Dintel_ -DALLOW_NON_INIT
+OPTF    = @@CFLAGS@@ -Dintel_
 OPTL    = @@-O@@
 OPTC    = @@CFLAGS@@
 #End Optimized options

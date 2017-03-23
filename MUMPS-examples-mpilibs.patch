@@ -4,7 +4,7 @@ Index: mumps/examples/Makefile
 ===================================================================
 --- mumps.orig/examples/Makefile
 +++ mumps/examples/Makefile
-@@ -26,29 +26,29 @@
+@@ -27,28 +27,28 @@
  LIBSMUMPS = $(libdir)/libsmumps$(PLAT)$(LIBEXT) $(LIBMUMPS_COMMON)
  
  ssimpletest:  $(LIBSMUMPS)  $$@.o
@@ -32,10 +32,9 @@ Index: mumps/examples/Makefile
 -	$(FL) -o $@ $(OPTL) zsimpletest.o  $(LIBZMUMPS) $(LORDERINGS) $(LIBS) $(LIBBLAS) $(LIBOTHERS)
 +	$(FL) -o $@ $(OPTL) zsimpletest.o  $(LIBZMUMPS) $(LORDERINGS) $(LIBS) $(MUMPS_LIBF77) $(LIBBLAS) $(LIBOTHERS)
  
- 
  c_example:	$(LIBDMUMPS) $$@.o
 -	$(FL) -o $@ $(OPTL) $@.o $(LIBDMUMPS) $(LORDERINGS) $(LIBS) $(LIBBLAS) $(LIBOTHERS)
 +	$(FL) -o $@ $(OPTL) $@.o $(LIBDMUMPS) $(LORDERINGS) $(LIBS) $(MUMPS_LIBF77) $(LIBBLAS) $(LIBOTHERS)
  
  
- .SUFFIXES: .c .F .o
+ multiple_arithmetics_example:	$(LIBSMUMPS) $(LIBDMUMPS) $(LIBCMUMPS) $(LIBZMUMPS) $$@.o

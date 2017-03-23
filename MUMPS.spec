@@ -8,14 +8,16 @@
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version 5.0.2
+%global soname_version %{version}
 
 # openblas Upstream supports the package only on these architectures.
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
 %ifarch %{openblas_arches}
 %global with_openmp 1
 %else
 %global with_openmp 0
+%endif
 %endif
 
 %if 0%{?rhel} || 0%{?rhel} < 7
@@ -28,6 +30,7 @@
 %ifnarch %{power64}
 %global with_mpicheck 1
 %global with_mpich 1
+%global with_openmpi 1
 %endif
 %endif
 %if 0%{?fedora} || 0%{?rhel} >= 7
@@ -54,17 +57,9 @@
 %endif
 %endif
 
-# Missing packages on el6
-%if 0%{?rhel} && 0%{?rhel} < 7
-%ifarch ppc64
-%global with_mpich 0
-%global with_mpicheck 0
-%endif
-%endif
-
 Name: MUMPS
-Version: 5.0.2
-Release: 9%{?dist}
+Version: 5.1.1
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -131,6 +126,7 @@ BuildArch: noarch
 This package contains common documentation files for MUMPS.
 
 ########################################################
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 %package openmp
 Summary: MUMPS libraries with OpenMP support
@@ -156,6 +152,7 @@ Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 %description openmp-examples
 This package contains common illustrative
 test programs about how MUMPS-openmp can be used.
+%endif
 %endif
 ##########################################################
 
@@ -290,14 +287,14 @@ sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 ## EPEL6 provides OpenMPI 1.8.1
 ## EPEL7 provides OpenMPI 1.10.0
 %if 0%{?rhel} && 0%{?rhel} < 7
-sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
 %endif
 %if 0%{?rhel} && 0%{?rhel} >= 7
-sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -L%{_libdir} -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
 %endif
 
 %if 0%{?fedora}
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
@@ -358,7 +355,7 @@ cp -f %{SOURCE1} Makefile.inc
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -I%{_fmoddir}|g' -i Makefile.inc
 sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
 
 MUMPS_MPI=mpich
 MUMPS_INCDIR=-I%{_incmpichdir}
@@ -445,6 +442,7 @@ make clean
 #######################################################
 
 ## Build OpenMP version
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 
 patch -R -p0 < %{PATCH3}
@@ -495,6 +493,7 @@ rm -rf lib/*
 cp -pr src/*.mod %{name}-%{version}-openmp/modules
 make clean
 %endif
+%endif
 #######################################################
 
 # Make sure documentation is using Unicode.
@@ -503,9 +502,11 @@ iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 %post openmp -p /sbin/ldconfig
 %postun openmp -p /sbin/ldconfig
+%endif
 %endif
 
 %check
@@ -523,6 +524,7 @@ LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./c_example
 popd
 
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 pushd %{name}-%{version}-openmp/examples
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
@@ -536,6 +538,7 @@ LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./c_example
 popd
+%endif
 %endif
 
 %if 0%{?with_mpicheck}
@@ -666,6 +669,7 @@ install -cpm 755 %{name}-%{version}/examples/README-* $RPM_BUILD_ROOT%{_libexecd
 install -cpm 644 %{name}-%{version}/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-%{version}/
 
 ############################################################
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}
@@ -692,6 +696,7 @@ install -cpm 755 %{name}-%{version}-openmp/examples/?simpletest $RPM_BUILD_ROOT%
 install -cpm 755 %{name}-%{version}-openmp/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 install -cpm 755 %{name}-%{version}-openmp/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 install -cpm 644 %{name}-%{version}-openmp/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}/
+%endif
 %endif
 ##############################################################
 
@@ -754,6 +759,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libexecdir}/%{name}-%{version}/
 
 #######################################################
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 %files openmp
 %{_libdir}/libpordo-%{soname_version}.so
@@ -769,6 +775,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %files openmp-examples
 %{_libexecdir}/%{name}-%{version}-openmp/
 %endif
+%endif
 #######################################################
 
 %files common
@@ -777,6 +784,10 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Tue Mar 21 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-1
+- Update to 5.1.1
+- Build openmp version on Fedora and Rhel7 only
+
 * Wed Mar 15 2017 Orion Poplawski <orion@cora.nwra.com> - 5.0.2-9
 - Build with openblas on all available architectures
 
