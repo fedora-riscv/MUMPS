@@ -59,7 +59,7 @@
 
 Name: MUMPS
 Version: 5.1.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -654,6 +654,8 @@ install -cpm 755 %{name}-%{version}/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 %{name}-%{version}/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 %{name}-%{version}/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 %{name}-%{version}/lib/libpord.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/libmpiseq-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/libmpiseq.so $RPM_BUILD_ROOT%{_libdir}
 
 # Make symbolic links instead hard-link 
 ln -sf %{_libdir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumps.so
@@ -662,6 +664,7 @@ ln -sf %{_libdir}/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libzm
 ln -sf %{_libdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumps.so
 ln -sf %{_libdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumps_common.so
 ln -sf %{_libdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpord.so
+ln -sf %{_libdir}/libmpiseq-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmpiseq.so
 
 install -cpm 755 %{name}-%{version}/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 %{name}-%{version}/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
@@ -683,6 +686,8 @@ install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso.so $RPM_BUILD_ROOT%{_l
 install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 %{name}-%{version}-openmp/lib/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
 install -cpm 755 %{name}-%{version}-openmp/lib/libpordo.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/libmpiseqo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}-openmp/lib/libpordo.so $RPM_BUILD_ROOT%{_libdir}
 
 # Make symbolic links instead hard-link 
 ln -sf %{_libdir}/libsmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumpso.so
@@ -691,6 +696,7 @@ ln -sf %{_libdir}/libzmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libz
 ln -sf %{_libdir}/libdmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumpso.so
 ln -sf %{_libdir}/libmumpso_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumpso_common.so
 ln -sf %{_libdir}/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpordo.so
+ln -sf %{_libdir}/libmpiseqo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmpiseqo.so
 
 install -cpm 755 %{name}-%{version}-openmp/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
 install -cpm 755 %{name}-%{version}-openmp/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
@@ -744,6 +750,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 %files
 %{_libdir}/libpord-%{soname_version}.so
+%{_libdir}/libmpiseq-%{soname_version}.so
 %{_libdir}/lib?mumps-%{soname_version}.so
 %{_libdir}/libmumps_common-%{soname_version}.so
 
@@ -754,6 +761,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libdir}/lib?mumps.so
 %{_libdir}/libmumps_common.so
 %{_libdir}/libpord.so
+%{_libdir}/libmpiseq.so
 
 %files examples
 %{_libexecdir}/%{name}-%{version}/
@@ -762,6 +770,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
 %files openmp
+%{_libdir}/libmpiseqo-%{soname_version}.so
 %{_libdir}/libpordo-%{soname_version}.so
 %{_libdir}/lib?mumpso-%{soname_version}.so
 %{_libdir}/libmumpso_common-%{soname_version}.so
@@ -770,6 +779,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libdir}/lib?mumpso.so
 %{_libdir}/libmumpso_common.so
 %{_libdir}/libpordo.so
+%{_libdir}/libmpiseqo.so
 %{_fmoddir}/%{name}-openmp-%{version}/
 
 %files openmp-examples
@@ -784,6 +794,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Mon Jun 19 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-2
+- Generate and install libmpiseq libraries (bug fix)
+
 * Tue Mar 21 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-1
 - Update to 5.1.1
 - Build openmp version on Fedora and Rhel7 only

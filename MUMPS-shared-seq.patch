@@ -2,13 +2,24 @@ Create a shared version of the sequential library, MUST BE LAST IN SERIES
 
 --- libseq/Makefile
 +++ libseq/Makefile
+@@ -8,7 +8,7 @@
+ include ../Makefile.inc
+
+-libmpiseq: libmpiseq$(PLAT)$(LIBEXT)
++libmpiseq: libmpiseq$(PLAT)$(LIBEXT) libmpiseq$(PLAT).so
+
+ libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
+ 	$(AR)$@ mpi.o mpic.o elapse.o
+
+--- libseq/Makefile
++++ libseq/Makefile
 @@ -13,10 +13,13 @@
  libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
  	$(AR)$@ mpi.o mpic.o elapse.o
  	$(RANLIB) $@
 +libmpiseq$(PLAT).so: mpi.o mpic.o elapse.o
-+	$(FC) -shared $^ -Wl,--as-needed -Wl,-soname,libmpiseq$(PLAT).so.5.1.1 -o libmpiseq$(PLAT).so.5.1.1
-+	ln -s libmpiseq$(PLAT).so.5.1.1 $@
++	$(FC) -shared $^ -Wl,--as-needed -Wl,-soname,libmpiseq$(PLAT)-5.1.1.so -o libmpiseq$(PLAT)-5.1.1.so
++	ln -s libmpiseq$(PLAT)-5.1.1.so $@
  .f.o:
 -	$(FC) $(OPTF)              -c $*.f $(OUTF)$*.o
 +	$(FC) $(OPTF)              -fPIC -c $*.f $(OUTF)$*.o
