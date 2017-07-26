@@ -59,7 +59,7 @@
 
 Name: MUMPS
 Version: 5.1.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -794,6 +794,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Mon Jun 19 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-2
 - Generate and install libmpiseq libraries (bug fix)
 
