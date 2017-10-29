@@ -2,22 +2,28 @@
 %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
 %endif
 
+# openblas available on these architectures.
+%if 0%{?fedora} && 0%{?fedora} > 26
+%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64 s390x}
+%else
+%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
+%endif
+%if 0%{?rhel}
+%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
+%endif
+
 ## Define libraries' destination
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version %{version}
+%global soname_version 5.1.2
 
-# openblas Upstream supports the package only on these architectures.
-%if 0%{?fedora} || 0%{?rhel} >= 7
-%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
 %ifarch %{openblas_arches}
 %global with_openmp 1
 %else
 %global with_openmp 0
-%endif
 %endif
 
 %if 0%{?rhel} || 0%{?rhel} < 7
@@ -58,8 +64,8 @@
 %endif
 
 Name: MUMPS
-Version: 5.1.1
-Release: 4%{?dist}
+Version: 5.1.2
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -86,8 +92,12 @@ Patch6: %{name}-shared-seq-openmp.patch
 Patch7: %{name}-examples-openmp.patch
 
 BuildRequires: gcc-gfortran
+%ifarch %{openblas_arches}
+BuildRequires: openblas-devel, openblas-srpm-macros
+%else
 BuildRequires: blas-devel
 BuildRequires: lapack-devel
+%endif
 BuildRequires: metis-devel
 BuildRequires: scotch-devel
 
@@ -132,7 +142,12 @@ This package contains common documentation files for MUMPS.
 Summary: MUMPS libraries with OpenMP support
 Group: Development/Libraries
 
-BuildRequires: openblas-devel
+%ifarch %{openblas_arches}
+BuildRequires: openblas-devel, openblas-srpm-macros
+%else
+BuildRequires: blas-devel
+BuildRequires: lapack-devel
+%endif
 Requires: %{name}-common = %{version}-%{release}
 %description openmp
 MUMPS libraries with OpenMP support.
@@ -281,54 +296,64 @@ cp -f %{SOURCE1} Makefile.inc
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -pthread -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 ## EPEL6 provides OpenMPI 1.8.1
 ## EPEL7 provides OpenMPI 1.10.0
 %if 0%{?rhel} && 0%{?rhel} < 7
-sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -lopen-rte -lopen-pal -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -lopen-rte -lopen-pal|g' -i Makefile.inc
 %endif
 %if 0%{?rhel} && 0%{?rhel} >= 7
-sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|-L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpif77_libs}|g' -i Makefile.inc
 %endif
 
 %if 0%{?fedora}
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 %endif
 
 MUMPS_MPI=openmpi
-MUMPS_INCDIR=-I%{_incmpidir}
+MUMPS_INCDIR=-I$MPI_INCLUDE
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libmpidir}
-ISCOTCH=-I%{_incmpidir}
-LSCOTCH=" -Wl,--as-needed -L%{_libmpidir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+SCOTCHDIR=$MPI_LIB
+ISCOTCH=-I$MPI_INCLUDE
+LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
-export MPIBLACSLIBS="-L%{_libmpidir} -lmpiblacs"
+export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
-export LD_LIBRARY_PATH="%{_libmpidir}:%{_libdir}"
-export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
+export LD_LIBRARY_PATH="$MPI_LIB:%{_libdir}"
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
-make \
- CC=%{_libdir}/openmpi/bin/mpicc \
- FC=%{_libdir}/openmpi/bin/mpif77 \
- FL=%{_libdir}/openmpi/bin/mpif77 \
+
+%ifarch %{openblas_arches}
+export LIBBLAS="-L%{_libdir} -lopenblas"
+export INCBLAS=-I%{_includedir}/openblas
+%else
+export LIBBLAS="-L%{_libdir} -lblas -llapack"
+export INCBLAS=-I%{_includedir}
+%endif
+
+make -j1 \
+ SONAME_VERSION=%{soname_version} \
+ CC=$MPI_BIN/mpicc \
+ FC=$MPI_BIN/mpif77 \
+ FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
- MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpidir} -Wl,-rpath -Wl,%{_libmpidir} %{mpic_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
+ MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
+ OPTL="%{__global_ldflags} -Wl,-z,now" all
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -353,42 +378,52 @@ cp -f %{SOURCE1} Makefile.inc
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -Dptscotch -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
-sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs} -L%{_libdir} -llapack -lblas|g' -i Makefile.inc
+sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
 MUMPS_MPI=mpich
-MUMPS_INCDIR=-I%{_incmpichdir}
+MUMPS_INCDIR=-I$MPI_INCLUDE
 LMETISDIR=%{_libdir}
 LMETIS="-L%{_libdir} -lmetis"
-SCOTCHDIR=%{_libmpichdir}
-ISCOTCH=-I%{_incmpichdir}
-LSCOTCH=" -Wl,--as-needed -L%{_libmpichdir} -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
-IPORD=" -I$PWD/PORD/include/"
-LPORD=" -L$PWD/PORD/lib -lpord"
+SCOTCHDIR=$MPI_LIB
+ISCOTCH=-I$MPI_INCLUDE
+LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
+export IPORD=" -I$PWD/PORD/include/"
+export LPORD=" -L$PWD/PORD/lib -lpord"
 
-export MPIBLACSLIBS="-L%{_libmpichdir} -lmpiblacs"
+export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 export MPI_COMPILER_NAME=mpich
-export LD_LIBRARY_PATH=%{_libmpichdir}:%{_libdir}
-export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
+export LD_LIBRARY_PATH=$MPI_LIB:%{_libdir}
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
 
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
-make \
- CC=%{_libdir}/mpich/bin/mpicc \
- FC=%{_libdir}/mpich/bin/mpif77 \
- FL=%{_libdir}/mpich/bin/mpif77 \
+
+%ifarch %{openblas_arches}
+export LIBBLAS="-L%{_libdir} -lopenblas"
+export INCBLAS=-I%{_includedir}/openblas
+%else
+export LIBBLAS="-L%{_libdir} -lblas -llapack"
+export INCBLAS=-I%{_includedir}
+%endif
+
+make -j1 \
+ SONAME_VERSION=%{soname_version} \
+ CC=$MPI_BIN/mpicc \
+ FC=$MPI_BIN/mpif77 \
+ FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
- MUMPS_INCDIR="$MUMPS_INCDIR" \
- MUMPS_LIBF77="-L%{_libdir} -lblas -L%{_libmpichdir} %{mpich_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
+ MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
+ OPTL="%{__global_ldflags} -Wl,-z,now" all
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -407,7 +442,7 @@ cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
 sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -pthread -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}/lib
 mkdir -p %{name}-%{version}/examples
@@ -416,23 +451,33 @@ mkdir -p %{name}-%{version}/modules
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
-export LDFLAGS="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed"
-make \
+%ifarch %{openblas_arches}
+export LIBBLAS="-L%{_libdir} -lopenblas"
+export INCBLAS=-I%{_includedir}/openblas
+%else
+export LIBBLAS="-L%{_libdir} -lblas -llapack"
+export INCBLAS=-I%{_includedir}
+%endif
+
+export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
+make -j1 \
+ SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
  FL=gfortran \
- MUMPS_LIBF77="-L%{_libdir} -lblas -llapack" \
+ MUMPS_LIBF77="${LIBBLAS}" \
+ LIBBLAS="${LIBBLAS}" \
  LIBOTHERS=" -lpthread" \
  LIBSEQ="-L../libseq -lmpiseq" \
- INCSEQ="-I../libseq" \
+ INCSEQ="-I../libseq $INCBLAS" \
  LMETISDIR=%{_libdir} \
  LMETIS="-L%{_libdir} -lmetis" \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH=-I%{_includedir} \
- LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now -Wl,--as-needed" all
+ OPTL="%{__global_ldflags} -Wl,-z,now" all
 make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
@@ -458,8 +503,8 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -Dscotch -Dmetis -fopenmp -pthread -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{optflags} -Wl,-z,now -fopenmp -Dscotch -Dmetis -pthread -I%{_fmoddir}|g' -i Makefile.inc
+sed -e 's|@@-O@@|%{__global_ldflags} -fopenmp -Wl,-z,now -lgomp -lrt|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}-openmp/lib
 mkdir -p %{name}-%{version}-openmp/examples
@@ -468,24 +513,33 @@ mkdir -p %{name}-%{version}-openmp/modules
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpordo"
 
-export LDFLAGS="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed"
-make \
+%ifarch %{openblas_arches}
+export LIBBLAS="-L%{_libdir} -lopenblas"
+export INCBLAS=-I%{_includedir}/openblas
+%else
+export LIBBLAS="-L%{_libdir} -lblas -llapack"
+export INCBLAS=-I%{_includedir}
+%endif
+
+export LDFLAGS="%{__global_ldflags} -fopenmp -Wl,-z,now -lgomp -lrt"
+make -j1 \
+ SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
  FL=gfortran \
- MUMPS_LIBF77="-L%{_libdir} -lopenblaso -llapack" \
- LIBBLAS="-L%{_libdir} -lopenblaso -llapack" \
+ MUMPS_LIBF77="${LIBBLAS}" \
+ LIBBLAS="${LIBBLAS}" \
  LIBOTHERS=" -lpthread" \
  LIBSEQ="-L../libseq -lmpiseq" \
- INCSEQ="-I../libseq -I%{_includedir}/openblas" \
+ INCSEQ="-I../libseq $INCBLAS" \
  LMETISDIR=%{_libdir} \
  LMETIS="-L%{_libdir} -lmetis" \
  SCOTCHDIR=%{_prefix} \
  ISCOTCH="-I%{_includedir}" \
- LSCOTCH=" -Wl,--as-needed -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
+ LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now -lgomp -lrt -Wl,--as-needed" all
+ OPTL="%{__global_ldflags} -fopenmp -Wl,-z,now -lrt" all
 make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
@@ -794,8 +848,14 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
-* Wed Aug 02 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.1-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+* Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-2
+- Set openblas arches
+
+* Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-1
+- Update to 5.1.2
+- Add -Wno-unused-dummy-argument -Wno-maybe-uninitialized options
+- Add new -DBLR_MT flag
+- Rebuild against openblas
 
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
