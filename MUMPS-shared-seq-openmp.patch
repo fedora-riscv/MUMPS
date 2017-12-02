@@ -2,13 +2,25 @@ Create a shared version of the sequential library, MUST BE LAST IN SERIES
 
 --- libseq/Makefile
 +++ libseq/Makefile
+@@ -8,7 +8,7 @@
+ include ../Makefile.inc
+
+-libmpiseq: libmpiseq$(PLAT)$(LIBEXT)
++libmpiseq: libmpiseq$(PLAT)$(LIBEXT) libmpiseqo$(PLAT).so
+
+ libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
+ 	$(AR)$@ mpi.o mpic.o elapse.o
+
+
+--- libseq/Makefile
++++ libseq/Makefile
 @@ -13,10 +13,13 @@
  libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
  	$(AR)$@ mpi.o mpic.o elapse.o
  	$(RANLIB) $@
 +libmpiseqo$(PLAT).so: mpi.o mpic.o elapse.o
-+	$(FC) -shared $^ -Wl,--as-needed -Wl,-soname,libmpiseqo$(PLAT).so.5.0.2 -o libmpiseqo$(PLAT).so.5.0.2
-+	ln -s libmpiseqo$(PLAT).so.5.0.2 $@
++	$(FC) -shared $^ -Wl,--as-needed -Wl,-soname,libmpiseqo$(PLAT)-$(SONAME_VERSION).so -o libmpiseqo$(PLAT)-$(SONAME_VERSION).so
++	ln -fs libmpiseqo$(PLAT)-$(SONAME_VERSION).so $@
  .f.o:
 -	$(FC) $(OPTF)              -c $*.f $(OUTF)$*.o
 +	$(FC) $(OPTF)              -fPIC -c $*.f $(OUTF)$*.o
@@ -36,18 +48,18 @@ Create a shared version of the sequential library, MUST BE LAST IN SERIES
  	$(RANLIB) $@
  
  $(libdir)/libmumpso_common$(PLAT).so:	$(OBJS_COMMON_MOD) $(OBJS_COMMON_OTHER)
--	$(FC) -shared $^ -Wl,-soname,libmumpso_common$(PLAT)-5.0.2.so $(OPTL) -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) $(MPIFLIB) $(MPICLIB) $(METISLIB) -o $(libdir)/libmumpso_common$(PLAT)-5.0.2.so $(OPTL) -Wl,-z,defs
-+	$(FC) -shared $^ -Wl,-soname,libmumpso_common$(PLAT)-5.0.2.so $(OPTL) -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) $(LIBSEQ) $(METISLIB) -o $(libdir)/libmumpso_common$(PLAT)-5.0.2.so -Wl,-z,defs
- 	ln -s libmumpso_common$(PLAT)-5.0.2.so $@
+-	$(FC) -shared $^ -Wl,-soname,libmumpso_common$(PLAT)-$(SONAME_VERSION).so $(OPTL) -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) $(MPIFLIB) $(MPICLIB) $(METISLIB) -o $(libdir)/libmumpso_common$(PLAT)-$(SONAME_VERSION).so $(OPTL) -Wl,-z,defs
++	$(FC) -shared $^ -Wl,-soname,libmumpso_common$(PLAT)-$(SONAME_VERSION).so $(OPTL) -L$(libdir) $(LORDERINGS) -lpthread $(MUMPS_LIBF77) $(LIBSEQ) $(METISLIB) -o $(libdir)/libmumpso_common$(PLAT)-$(SONAME_VERSION).so -Wl,-z,defs
+ 	ln -fs libmumpso_common$(PLAT)-$(SONAME_VERSION).so $@
  
  $(libdir)/lib$(ARITH)mumpso$(PLAT).a:    $(OBJS_MOD) $(OBJS_OTHER)
 @@ -168,7 +168,7 @@
  	$(RANLIB) $@
  
  $(libdir)/lib$(ARITH)mumpso$(PLAT).so:    $(OBJS_MOD) $(OBJS_OTHER)
--	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumpso$(PLAT)-5.0.2.so $(OPTL) -L$(libdir) -lmumpso_common$(PLAT) $(MUMPS_LIBF77) $(LORDERINGS) $(MPIFLIB) $(METISLIB) $(SCALAP) -o $(libdir)/lib$(ARITH)mumpso$(PLAT)-5.0.2.so $(OPTL) -Wl,-z,defs
-+	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumpso$(PLAT)-5.0.2.so $(OPTL) -L$(libdir) -lmumpso_common$(PLAT) $(LORDERINGS) $(MUMPS_LIBF77) $(LIBSEQ) $(METISLIB) $(SCALAP) -o $(libdir)/lib$(ARITH)mumpso$(PLAT)-5.0.2.so -Wl,-z,defs
- 	ln -s lib$(ARITH)mumpso$(PLAT)-5.0.2.so $@
+-	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumpso$(PLAT)-$(SONAME_VERSION).so $(OPTL) -L$(libdir) -lmumpso_common$(PLAT) $(MUMPS_LIBF77) $(LORDERINGS) $(MPIFLIB) $(METISLIB) $(SCALAP) -o $(libdir)/lib$(ARITH)mumpso$(PLAT)-$(SONAME_VERSION).so $(OPTL) -Wl,-z,defs
++	$(FC) -shared $^ -Wl,-soname,lib$(ARITH)mumpso$(PLAT)-$(SONAME_VERSION).so $(OPTL) -L$(libdir) -lmumpso_common$(PLAT) $(LORDERINGS) $(MUMPS_LIBF77) $(LIBSEQ) $(METISLIB) $(SCALAP) -o $(libdir)/lib$(ARITH)mumpso$(PLAT)-$(SONAME_VERSION).so -Wl,-z,defs
+ 	ln -fs lib$(ARITH)mumpso$(PLAT)-$(SONAME_VERSION).so $@
 
 
 

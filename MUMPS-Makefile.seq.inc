@@ -75,14 +75,14 @@ RANLIB  = echo
 INCSEQ = -I$(topdir)/libseq
 LIBSEQ  =  -L$(topdir)/libseq -lmpiseq
 #LIBBLAS = -L/usr/lib/xmm/ -lf77blas -latlas
-LIBBLAS = -lblas -llapack
+#LIBBLAS = -lblas -llapack
 LIBOTHERS = -lpthread
 METISLIB = -lmetis
 #Preprocessor defs for calling Fortran from C (-DAdd_ or -DAdd__ or -DUPPER)
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = @@CFLAGS@@ -Dintel_ -DALLOW_NON_INIT
+OPTF    = @@CFLAGS@@ -Dintel_ -DBLR_MT -Wno-unused-dummy-argument -Wno-maybe-uninitialized
 OPTL    = @@-O@@
 OPTC    = @@CFLAGS@@
 #End Optimized options
