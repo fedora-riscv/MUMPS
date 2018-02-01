@@ -65,7 +65,7 @@
 
 Name: MUMPS
 Version: 5.1.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 Group: Development/Libraries
@@ -339,7 +339,7 @@ export LIBBLAS="-L%{_libdir} -lblas -llapack"
 export INCBLAS=-I%{_includedir}
 %endif
 
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=$MPI_BIN/mpicc \
  FC=$MPI_BIN/mpif77 \
@@ -353,7 +353,7 @@ make -j1 \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -409,7 +409,7 @@ export LIBBLAS="-L%{_libdir} -lblas -llapack"
 export INCBLAS=-I%{_includedir}
 %endif
 
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=$MPI_BIN/mpicc \
  FC=$MPI_BIN/mpif77 \
@@ -423,7 +423,7 @@ make -j1 \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -460,7 +460,7 @@ export INCBLAS=-I%{_includedir}
 %endif
 
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
@@ -477,7 +477,7 @@ make -j1 \
  LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
@@ -522,7 +522,7 @@ export INCBLAS=-I%{_includedir}
 %endif
 
 export LDFLAGS="%{__global_ldflags} -fopenmp -Wl,-z,now -lgomp -lrt"
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
@@ -539,7 +539,7 @@ make -j1 \
  LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -fopenmp -Wl,-z,now -lrt" all
+ OPTL="%{__global_ldflags} -fopenmp -Wl,-z,now -lrt"
 make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
@@ -848,6 +848,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Jan 31 2018 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-3
+- Rebuild for GCC-8
+
 * Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-2
 - Set openblas arches
 
