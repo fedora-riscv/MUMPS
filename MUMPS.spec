@@ -1,4 +1,4 @@
-%if 0%{?rhel} < 7
+%if 0%{?rhel} && 0%{?rhel} < 7
 %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
 %endif
 
@@ -26,13 +26,13 @@
 %global with_openmp 0
 %endif
 
-%if 0%{?rhel} || 0%{?rhel} < 7
+%if 0%{?rhel} && 0%{?rhel} < 7
 %ifarch %{power64}
 %global with_mpicheck 0
 %global with_mpich 0
 %endif
 %endif
-%if 0%{?rhel} || 0%{?rhel} < 7
+%if 0%{?rhel} && 0%{?rhel} < 7
 %ifnarch %{power64}
 %global with_mpicheck 1
 %global with_mpich 1
