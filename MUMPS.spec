@@ -68,7 +68,6 @@ Version: 5.1.2
 Release: 7%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
-Group: Development/Libraries
 URL: http://mumps.enseeiht.fr/
 Source0: http://mumps.enseeiht.fr/%{name}_%{version}.tar.gz
 
@@ -112,7 +111,6 @@ C interfaces, and can interface with ordering tools such as Scotch.
 
 %package devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
 %description devel
@@ -122,7 +120,6 @@ including symbols used by MUMPS.
 
 %package examples
 Summary: The MUMPS common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 %description examples
 This package contains common illustrative
@@ -130,7 +127,6 @@ test programs about how MUMPS can be used.
 
 %package common
 Summary: Documentation files for MUMPS
-Group: Development/Libraries
 BuildArch: noarch
 %description common
 This package contains common documentation files for MUMPS.
@@ -140,7 +136,6 @@ This package contains common documentation files for MUMPS.
 %if 0%{?with_openmp}
 %package openmp
 Summary: MUMPS libraries with OpenMP support
-Group: Development/Libraries
 
 %ifarch %{openblas_arches}
 BuildRequires: openblas-devel, openblas-srpm-macros
@@ -154,7 +149,6 @@ MUMPS libraries with OpenMP support.
 
 %package openmp-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 %description openmp-devel
@@ -162,7 +156,6 @@ Shared links, header files for MUMPS OpenMP.
 
 %package openmp-examples
 Summary: The MUMPS OpenMP common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 %description openmp-examples
 This package contains common illustrative
@@ -175,7 +168,6 @@ test programs about how MUMPS-openmp can be used.
 %if 0%{?with_openmpi}
 %package openmpi
 Summary: MUMPS libraries compiled against openmpi
-Group: Development/Libraries
 
 BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
@@ -192,7 +184,6 @@ MUMPS libraries compiled against openmpi.
 
 %package openmpi-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
@@ -204,7 +195,6 @@ Shared links, header files for MUMPS.
 
 %package openmpi-examples
 Summary: The MUMPS OpenMPI common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 Requires: openmpi
 %if 0%{?fedora}
@@ -221,7 +211,6 @@ test programs about how MUMPS-openmpi can be used.
 %if 0%{?with_mpich}
 %package mpich
 Summary: MUMPS libraries compiled against MPICH
-Group: Development/Libraries
 
 BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
@@ -237,7 +226,6 @@ MUMPS libraries compiled against MPICH.
 
 %package mpich-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 BuildRequires: mpich-devel
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 %if 0%{?fedora}
@@ -248,7 +236,6 @@ Shared links, header files for MUMPS.
 
 %package mpich-examples
 Summary: The MUMPS MPICH common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
 Requires: mpich
