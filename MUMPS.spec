@@ -65,7 +65,7 @@
 
 Name: MUMPS
 Version: 5.1.2
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -565,6 +565,8 @@ popd
 
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
+# Allow openmpi to run with more processes than cores
+export OMPI_MCA_rmaps_base_oversubscribe=1
 pushd %{name}-%{version}-openmp/examples
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./ssimpletest < input_simpletest_real
@@ -833,6 +835,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Thu Feb 14 2019 Orion Poplawski <orion@nwra.com> - 5.1.2-9
+- Rebuild for openmpi 3.1.3
+
 * Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
