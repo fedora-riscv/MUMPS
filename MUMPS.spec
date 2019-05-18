@@ -2,16 +2,6 @@
 %{!?__global_ldflags: %global __global_ldflags -Wl,-z,relro}
 %endif
 
-# openblas available on these architectures.
-%if 0%{?fedora} && 0%{?fedora} > 26
-%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64 s390x}
-%else
-%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
-%endif
-%if 0%{?rhel}
-%{!?openblas_arches:%global openblas_arches x86_64 %{ix86} armv7hl %{power64} aarch64}
-%endif
-
 ## Define libraries' destination
 %global _incmpidir %{_includedir}/openmpi-%{_arch}
 %global _libmpidir %{_libdir}/openmpi/lib
@@ -45,30 +35,22 @@
 %global with_openmpi 1
 %endif
 
-%ifarch s390x
-%if 0%{?fedora} >= 26
-%global with_openmpi 1
-%else
-%global with_openmpi 0
-%global with_mpicheck 1
-%endif
-%endif
-
-%ifarch s390x
-%if 0%{?fedora} >= 26
 %global with_mpich 1
+%global with_openmpi 1
+
+# Disable tests with OpenMPI-4
+# Caught signal 11 (Segmentation fault: address not mapped to object at address 0x7f1f0ad30948)
+%if 0%{?fedora}
+%global with_mpicheck 0
 %else
-%global with_mpich 0
 %global with_mpicheck 1
-%endif
 %endif
 
 Name: MUMPS
 Version: 5.1.2
-Release: 2%{?dist}
+Release: 10%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
-Group: Development/Libraries
 URL: http://mumps.enseeiht.fr/
 Source0: http://mumps.enseeiht.fr/%{name}_%{version}.tar.gz
 
@@ -112,7 +94,6 @@ C interfaces, and can interface with ordering tools such as Scotch.
 
 %package devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
 %description devel
@@ -122,7 +103,6 @@ including symbols used by MUMPS.
 
 %package examples
 Summary: The MUMPS common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 %description examples
 This package contains common illustrative
@@ -130,7 +110,6 @@ test programs about how MUMPS can be used.
 
 %package common
 Summary: Documentation files for MUMPS
-Group: Development/Libraries
 BuildArch: noarch
 %description common
 This package contains common documentation files for MUMPS.
@@ -140,7 +119,6 @@ This package contains common documentation files for MUMPS.
 %if 0%{?with_openmp}
 %package openmp
 Summary: MUMPS libraries with OpenMP support
-Group: Development/Libraries
 
 %ifarch %{openblas_arches}
 BuildRequires: openblas-devel, openblas-srpm-macros
@@ -154,7 +132,6 @@ MUMPS libraries with OpenMP support.
 
 %package openmp-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 %description openmp-devel
@@ -162,7 +139,6 @@ Shared links, header files for MUMPS OpenMP.
 
 %package openmp-examples
 Summary: The MUMPS OpenMP common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 %description openmp-examples
 This package contains common illustrative
@@ -175,7 +151,6 @@ test programs about how MUMPS-openmp can be used.
 %if 0%{?with_openmpi}
 %package openmpi
 Summary: MUMPS libraries compiled against openmpi
-Group: Development/Libraries
 
 BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
@@ -185,14 +160,14 @@ BuildRequires: metis-devel, ptscotch-openmpi-devel
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
-Requires: openmpi
+Requires: openmpi%{?_isa}
+Requires: scalapack-openmpi%{?_isa}
 
 %description openmpi
 MUMPS libraries compiled against openmpi.
 
 %package openmpi-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
@@ -204,7 +179,6 @@ Shared links, header files for MUMPS.
 
 %package openmpi-examples
 Summary: The MUMPS OpenMPI common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 Requires: openmpi
 %if 0%{?fedora}
@@ -221,7 +195,6 @@ test programs about how MUMPS-openmpi can be used.
 %if 0%{?with_mpich}
 %package mpich
 Summary: MUMPS libraries compiled against MPICH
-Group: Development/Libraries
 
 BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
@@ -231,13 +204,14 @@ BuildRequires: metis-devel, ptscotch-mpich-devel
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
-Requires: mpich
+Requires: mpich%{?_isa}
+Requires: scalapack-mpich%{?_isa}
+
 %description mpich
 MUMPS libraries compiled against MPICH.
 
 %package mpich-devel
 Summary: The MUMPS headers and development-related files
-Group: Development/Libraries
 BuildRequires: mpich-devel
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 %if 0%{?fedora}
@@ -248,7 +222,6 @@ Shared links, header files for MUMPS.
 
 %package mpich-examples
 Summary: The MUMPS MPICH common illustrative test programs
-Group: Development/Libraries
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
 Requires: mpich
@@ -339,7 +312,7 @@ export LIBBLAS="-L%{_libdir} -lblas -llapack"
 export INCBLAS=-I%{_includedir}
 %endif
 
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=$MPI_BIN/mpicc \
  FC=$MPI_BIN/mpif77 \
@@ -353,7 +326,7 @@ make -j1 \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 %{_openmpi_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -409,7 +382,7 @@ export LIBBLAS="-L%{_libdir} -lblas -llapack"
 export INCBLAS=-I%{_includedir}
 %endif
 
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=$MPI_BIN/mpicc \
  FC=$MPI_BIN/mpif77 \
@@ -423,7 +396,7 @@ make -j1 \
  LSCOTCH="$LSCOTCH" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
@@ -460,7 +433,7 @@ export INCBLAS=-I%{_includedir}
 %endif
 
 export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
@@ -477,7 +450,7 @@ make -j1 \
  LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -Wl,-z,now" all
+ OPTL="%{__global_ldflags} -Wl,-z,now"
 make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
@@ -522,7 +495,7 @@ export INCBLAS=-I%{_includedir}
 %endif
 
 export LDFLAGS="%{__global_ldflags} -fopenmp -Wl,-z,now -lgomp -lrt"
-make -j1 \
+make all \
  SONAME_VERSION=%{soname_version} \
  CC=gcc \
  FC=gfortran \
@@ -539,7 +512,7 @@ make -j1 \
  LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
  IPORD="$IPORD" \
  LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -fopenmp -Wl,-z,now -lrt" all
+ OPTL="%{__global_ldflags} -fopenmp -Wl,-z,now -lrt"
 make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
@@ -553,13 +526,11 @@ make clean
 # Make sure documentation is using Unicode.
 iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 
-%post -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
+%ldconfig_scriptlets
 
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %if 0%{?with_openmp}
-%post openmp -p /sbin/ldconfig
-%postun openmp -p /sbin/ldconfig
+%ldconfig_scriptlets openmp
 %endif
 %endif
 
@@ -622,74 +593,74 @@ popd
 
 #########################################################
 %if 0%{?with_openmpi}
-mkdir -p $RPM_BUILD_ROOT%{_libmpidir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
-mkdir -p $RPM_BUILD_ROOT%{_incmpidir}
-mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/openmpi/%{name}-%{version}
-
 %{_openmpi_load}
+mkdir -p $RPM_BUILD_ROOT$MPI_LIB
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
+mkdir -p $RPM_BUILD_ROOT$MPI_INCLUDE
+mkdir -p $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}
+
 # Install libraries.
-install -cpm 755 %{name}-%{version}-openmpi/lib/lib*-*.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*-*.so $RPM_BUILD_ROOT$MPI_LIB
 
 # Install development files.
-install -cpm 755 %{name}-%{version}-openmpi/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}
-install -cpm 755 %{name}-%{version}-openmpi/lib/libpord.so $RPM_BUILD_ROOT%{_libmpidir}
+install -cpm 755 %{name}-%{version}-openmpi/lib/libmumps_common.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-openmpi/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-openmpi/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-openmpi/lib/libpord.so $RPM_BUILD_ROOT$MPI_LIB
 
 # Make symbolic links instead hard-link 
-ln -sf %{_libmpidir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libsmumps.so
-ln -sf %{_libmpidir}/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libcmumps.so
-ln -sf %{_libmpidir}/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libzmumps.so
-ln -sf %{_libmpidir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libdmumps.so
-ln -sf %{_libmpidir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libmumps_common.so
-ln -sf %{_libmpidir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpidir}/libpord.so
+ln -sf $MPI_LIB/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libsmumps.so
+ln -sf $MPI_LIB/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libcmumps.so
+ln -sf $MPI_LIB/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libzmumps.so
+ln -sf $MPI_LIB/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libdmumps.so
+ln -sf $MPI_LIB/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libmumps_common.so
+ln -sf $MPI_LIB/libpord-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libpord.so
 
 install -cpm 755 %{name}-%{version}-openmpi/examples/?simpletest $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-openmpi/examples/input_* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 
-install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpidir}
-install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpidir}
-install -cpm 644 %{name}-%{version}-openmpi/modules/* $RPM_BUILD_ROOT%{_fmoddir}/openmpi/%{name}-%{version}/
+install -cpm 644 include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 PORD/include/* $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 %{name}-%{version}-openmpi/modules/* $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}/
 %{_openmpi_unload}
 %endif
 ##########################################################
 
 #########################################################
 %if 0%{?with_mpich}
-mkdir -p $RPM_BUILD_ROOT%{_libmpichdir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
-mkdir -p $RPM_BUILD_ROOT%{_incmpichdir}
-mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/mpich/%{name}-%{version}
-
 %{_mpich_load}
+mkdir -p $RPM_BUILD_ROOT$MPI_LIB
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
+mkdir -p $RPM_BUILD_ROOT$MPI_INCLUDE
+mkdir -p $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}
+
 # Install libraries.
-install -cpm 755 %{name}-%{version}-mpich/lib/lib*-*.so $RPM_BUILD_ROOT%{_libmpichdir}
+install -cpm 755 %{name}-%{version}-mpich/lib/lib*-*.so $RPM_BUILD_ROOT$MPI_LIB
 
 # Install development files.
-install -cpm 755 %{name}-%{version}-mpich/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libmpichdir}
-install -cpm 755 %{name}-%{version}-mpich/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libmpichdir}
-install -cpm 755 %{name}-%{version}-mpich/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}
-install -cpm 755 %{name}-%{version}-mpich/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}
-install -cpm 755 %{name}-%{version}-mpich/lib/libpord.so $RPM_BUILD_ROOT%{_libmpichdir}
+install -cpm 755 %{name}-%{version}-mpich/lib/libmumps_common.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-mpich/lib/lib*mumps.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-mpich/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-mpich/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB
+install -cpm 755 %{name}-%{version}-mpich/lib/libpord.so $RPM_BUILD_ROOT$MPI_LIB
 
 # Make symbolic links instead hard-link 
-ln -sf %{_libmpichdir}/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libsmumps.so
-ln -sf %{_libmpichdir}/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libcmumps.so
-ln -sf %{_libmpichdir}/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libzmumps.so
-ln -sf %{_libmpichdir}/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libdmumps.so
-ln -sf %{_libmpichdir}/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libmumps_common.so
-ln -sf %{_libmpichdir}/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libmpichdir}/libpord.so
+ln -sf $MPI_LIB/libsmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libsmumps.so
+ln -sf $MPI_LIB/libcmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libcmumps.so
+ln -sf $MPI_LIB/libzmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libzmumps.so
+ln -sf $MPI_LIB/libdmumps-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libdmumps.so
+ln -sf $MPI_LIB/libmumps_common-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libmumps_common.so
+ln -sf $MPI_LIB/libpord-%{soname_version}.so $RPM_BUILD_ROOT$MPI_LIB/libpord.so
 
 install -cpm 755 %{name}-%{version}-mpich/examples/?simpletest $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-mpich/examples/input_* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 
-install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_incmpichdir}
-install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_incmpichdir}
-install -cpm 644 %{name}-%{version}-mpich/modules/* $RPM_BUILD_ROOT%{_fmoddir}/mpich/%{name}-%{version}/
+install -cpm 644 include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 PORD/include/* $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 %{name}-%{version}-mpich/modules/* $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}/
 %{_mpich_unload}
 %endif
 ##########################################################
@@ -776,7 +747,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpidir}/lib?mumps.so
 %{_libmpidir}/libmumps_common.so
 %{_libmpidir}/libpord.so
-%{_fmoddir}/openmpi/%{name}-%{version}/
+%{_fmoddir}/openmpi%{?el7:-%_arch}/%{name}-%{version}/
 
 %files openmpi-examples
 %{_libdir}/openmpi/%{name}-%{version}-examples/
@@ -795,7 +766,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %{_libmpichdir}/lib?mumps.so
 %{_libmpichdir}/libmumps_common.so
 %{_libmpichdir}/libpord.so
-%{_fmoddir}/mpich/%{name}-%{version}/
+%{_fmoddir}/mpich%{?el7:-%_arch}/%{name}-%{version}/
 
 %files mpich-examples
 %{_libdir}/mpich/%{name}-%{version}-examples/
@@ -848,6 +819,31 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Fri May 17 2019 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-10
+- Require scalapack explicity (rhbz #1711291 #1711289)
+- Disable tests with OpenMPI-4
+
+* Thu Feb 14 2019 Orion Poplawski <orion@nwra.com> - 5.1.2-9
+- Rebuild for openmpi 3.1.3
+
+* Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Thu Jul 19 2018 Sandro Mani <manisandro@gmail.com> - 5.1.2-7
+- Rebuild (scotch)
+
+* Thu Jul 12 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Thu Feb 15 2018 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-5
+- Use %%ldconfig_scriptlets
+
+* Wed Feb 07 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Wed Jan 31 2018 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-3
+- Rebuild for GCC-8
+
 * Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-2
 - Set openblas arches
 
