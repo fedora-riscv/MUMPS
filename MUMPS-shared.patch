@@ -16,8 +16,8 @@ Index: mumps/src/Makefile
 +              $(libdir)/lib$(ARITH)mumps$(PLAT).so
  
  OBJS_COMMON_MOD = \
-         lr_common.o \
-@@ -167,14 +169,23 @@
+         ana_omp_m.o\
+@@ -177,14 +179,24 @@
          $(ARITH)tools.o\
          $(ARITH)type3_root.o
  
@@ -42,10 +42,11 @@ Index: mumps/src/Makefile
 +	ln -fs lib$(ARITH)mumps$(PLAT)-$(SONAME_VERSION).so $@
 +
 +
++
  # Dependencies between modules:
- $(ARITH)mumps_load.o:		$(ARITH)mumps_comm_buffer.o \
- 				$(ARITH)mumps_struc_def.o \
-@@ -290,13 +301,13 @@
+ # i) arithmetic-dependent modules:
+ $(ARITH)ana_aux.o:              $(ARITH)mumps_struc_def.o \
+@@ -382,13 +394,13 @@
  
  .SUFFIXES: .c .F .o
  .F.o:
@@ -60,5 +61,5 @@ Index: mumps/src/Makefile
 -	      $(IORDERINGSC) $(ORDERINGSC) -I../include -c mumps_c.c $(OUTC)$@
 +	      $(IORDERINGSC) $(ORDERINGSC) -I../include -fPIC -c mumps_c.c $(OUTC)$@
  
- 
  clean:
+ 	$(RM) *.o *.mod
