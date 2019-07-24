@@ -25,7 +25,7 @@
 
 Name: MUMPS
 Version: 5.2.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -784,6 +784,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
 * Sat Jul 20 2019 Antonio Trande <sagitterATfedoraproject.org> - 5.2.1-1
 - Update to 5.2.1
 
