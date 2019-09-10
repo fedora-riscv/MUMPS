@@ -544,6 +544,8 @@ popd
 %{_openmpi_load}
 pushd %{name}-%{version}-openmpi/examples
 export LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH
+# Allow openmpi to run with more processes than cores
+export OMPI_MCA_rmaps_base_oversubscribe=1
 ./ssimpletest < input_simpletest_real
 ./dsimpletest < input_simpletest_real
 ./csimpletest < input_simpletest_cmplx
