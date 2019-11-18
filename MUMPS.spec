@@ -61,6 +61,7 @@ BuildRequires: metis-devel
 BuildRequires: scotch-devel
 
 BuildRequires: openssh-clients
+BuildRequires: hwloc-devel
 Requires:      %{name}-common = %{version}-%{release}
 
 %description
