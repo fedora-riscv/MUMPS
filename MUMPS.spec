@@ -25,7 +25,7 @@
 
 Name: MUMPS
 Version: 5.2.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -268,7 +268,6 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
-export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 export MPI_COMPILER_NAME=openmpi
 export LD_LIBRARY_PATH="$MPI_LIB:%{_libdir}"
 export LDFLAGS="%{__global_ldflags}"
@@ -292,7 +291,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -341,7 +340,6 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 export IPORD=" -I$PWD/PORD/include/"
 export LPORD=" -L$PWD/PORD/lib -lpord"
 
-export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 export MPI_COMPILER_NAME=mpich
 export LD_LIBRARY_PATH=$MPI_LIB:%{_libdir}
 export LDFLAGS="%{__global_ldflags}"
@@ -365,7 +363,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB $MPIBLACSLIBS -lscalapack" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB -lscalapack" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -786,6 +784,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Sun Nov 17 2019 Tom Callaway <spot@fedoraproject.org> - 5.2.1-3
+- libmpiblacs is now inside of libscalapack
+
 * Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
