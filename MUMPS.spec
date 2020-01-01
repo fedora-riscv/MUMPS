@@ -131,13 +131,15 @@ Summary: MUMPS libraries compiled against openmpi
 BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
 BuildRequires: scalapack-openmpi-devel
-BuildRequires: metis-devel, ptscotch-openmpi-devel
+BuildRequires: metis-devel
+BuildRequires: ptscotch-openmpi-devel
 %if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi%{?_isa}
 Requires: scalapack-openmpi%{?_isa}
+Requires: ptscotch-openmpi%{?_isa}
 
 %description openmpi
 MUMPS libraries compiled against openmpi.
@@ -175,13 +177,15 @@ Summary: MUMPS libraries compiled against MPICH
 BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
 BuildRequires: scalapack-mpich-devel
-BuildRequires: metis-devel, ptscotch-mpich-devel
+BuildRequires: metis-devel
+BuildRequires: ptscotch-mpich-devel
 %if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
 Requires: mpich%{?_isa}
 Requires: scalapack-mpich%{?_isa}
+Requires: ptscotch-mpich%{?_isa}
 
 %description mpich
 MUMPS libraries compiled against MPICH.
