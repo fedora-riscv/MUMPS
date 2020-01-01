@@ -25,7 +25,7 @@
 
 Name: MUMPS
 Version: 5.2.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -269,6 +269,9 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
+%if 0%{?rhel} && 0%{?rhel} >= 7
+export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
+%endif
 export MPI_COMPILER_NAME=openmpi
 export LD_LIBRARY_PATH="$MPI_LIB:%{_libdir}"
 export LDFLAGS="%{__global_ldflags}"
@@ -292,7 +295,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB -lscalapack" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB -lscalapack %{?rhel:$MPIBLACSLIBS}" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -341,6 +344,9 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 export IPORD=" -I$PWD/PORD/include/"
 export LPORD=" -L$PWD/PORD/lib -lpord"
 
+%if 0%{?rhel} && 0%{?rhel} >= 7
+export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
+%endif
 export MPI_COMPILER_NAME=mpich
 export LD_LIBRARY_PATH=$MPI_LIB:%{_libdir}
 export LDFLAGS="%{__global_ldflags}"
@@ -364,7 +370,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB -lscalapack" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB -lscalapack %{?rhel:$MPIBLACSLIBS}" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -785,16 +791,19 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Jan 01 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-4
+- Use libmpiblacs separately on EPEL 7+
+
 * Sun Nov 17 2019 Tom Callaway <spot@fedoraproject.org> - 5.2.1-3
 - libmpiblacs is now inside of libscalapack
 
 * Wed Jul 24 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
-* Sat Jul 20 2019 Antonio Trande <sagitterATfedoraproject.org> - 5.2.1-1
+* Sat Jul 20 2019 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-1
 - Update to 5.2.1
 
-* Fri May 17 2019 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-10
+* Fri May 17 2019 Antonio Trande <sagitter@fedoraproject.org> - 5.1.2-10
 - Require scalapack explicity (rhbz #1711291 #1711289)
 - Disable tests with OpenMPI-4
 
@@ -810,19 +819,19 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 * Thu Jul 12 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
-* Thu Feb 15 2018 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-5
+* Thu Feb 15 2018 Antonio Trande <sagitter@fedoraproject.org> - 5.1.2-5
 - Use %%ldconfig_scriptlets
 
 * Wed Feb 07 2018 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.2-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
-* Wed Jan 31 2018 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-3
+* Wed Jan 31 2018 Antonio Trande <sagitter@fedoraproject.org> - 5.1.2-3
 - Rebuild for GCC-8
 
-* Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-2
+* Sat Oct 28 2017 Antonio Trande <sagitter@fedoraproject.org> - 5.1.2-2
 - Set openblas arches
 
-* Sat Oct 28 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.2-1
+* Sat Oct 28 2017 Antonio Trande <sagitter@fedoraproject.org> - 5.1.2-1
 - Update to 5.1.2
 - Add -Wno-unused-dummy-argument -Wno-maybe-uninitialized options
 - Add new -DBLR_MT flag
@@ -831,97 +840,97 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.1-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
 
-* Mon Jun 19 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-2
+* Mon Jun 19 2017 Antonio Trande <sagitter@fedoraproject.org> - 5.1.1-2
 - Generate and install libmpiseq libraries (bug fix)
 
-* Tue Mar 21 2017 Antonio Trande <sagitterATfedoraproject.org> - 5.1.1-1
+* Tue Mar 21 2017 Antonio Trande <sagitter@fedoraproject.org> - 5.1.1-1
 - Update to 5.1.1
 - Build openmp version on Fedora and Rhel7 only
 
 * Wed Mar 15 2017 Orion Poplawski <orion@cora.nwra.com> - 5.0.2-9
 - Build with openblas on all available architectures
 
-* Tue Feb 14 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-8
+* Tue Feb 14 2017 Antonio Trande <sagitter@fedoraproject.org>  5.0.2-8
 - Build OpenMPI version on Fedora26-s390
 
 * Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.2-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
-* Tue Jan 31 2017 Antonio Trande <sagitterATfedoraproject.org>  5.0.2-6
+* Tue Jan 31 2017 Antonio Trande <sagitter@fedoraproject.org>  5.0.2-6
 - Rebuild for gcc-gfortran
 - Include Fortran modules
 
-* Fri Dec 02 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-5
+* Fri Dec 02 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.2-5
 - Fix MPICH builds on s390
 
-* Tue Nov 01 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-4
+* Tue Nov 01 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.2-4
 - Build on s390
 - Rebuild on epel
 
-* Mon Oct 31 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-3
+* Mon Oct 31 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.2-3
 - New architectures
 
 * Fri Oct 21 2016 Orion Poplawski <orion@cora.nwra.com> - 5.0.2-2
 - Rebuild for openmpi 2.0
 
-* Mon Jul 18 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.2-1
+* Mon Jul 18 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.2-1
 - Update to 5.0.2
 
-* Fri Apr 29 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-20
+* Fri Apr 29 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-20
 - Build MPICH libraries on PPC64* except EPEL6
 
 * Mon Apr 04 2016 Peter Robinson <pbrobinson@fedoraproject.org> - 5.0.1-19
 - aarch64/Power64 have mpich/openmpi now
 
-* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-18
+* Wed Mar 23 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-18
 - Examples directory moved under /usr/lib/openmpi(mpich)
 
-* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-17
+* Wed Mar 23 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-17
 - Added rpm-mpi-hooks as BR in examples sub-packages
 - Added openmpi/mpich as Requires package
 
-* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-16
+* Wed Mar 23 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-16
 - Added rpm-mpi-hooks dependencies
 
-* Wed Mar 23 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-15
+* Wed Mar 23 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-15
 - Fixed linker flags
 
-* Tue Mar 22 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-14
+* Tue Mar 22 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-14
 - Fixed MPI paths
 
-* Sun Mar 20 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-13
+* Sun Mar 20 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-13
 - Rebuild for Metis
 - Compiled with OpenMP support (bz#1319477)
 
-* Fri Feb 12 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-12
+* Fri Feb 12 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-12
 - Added linker flags to fix unused-direct-shlib-dependency
 
 * Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 5.0.1-11
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
-* Fri Jan 08 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-10
+* Fri Jan 08 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-10
 - Built MPICH libraries on EPEL (bz#1296387)
 - Exclude OpenMPI on s390 arches
 - Exclude MPICH on PPC arches
 
-* Thu Jan 07 2016 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-9
+* Thu Jan 07 2016 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-9
 - Built MPICH libraries (bz#1296387)
 - Removed useless Requires packages
 
-* Fri Nov 20 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-8
+* Fri Nov 20 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-8
 - Fixed links to OpenMPI-1.10.1 libraries on Fedora
 
-* Fri Nov 20 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-7
+* Fri Nov 20 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-7
 - Fixed links to OpenMPI-1.6.4 libraries on EPEL7
 
-* Wed Nov 18 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-6
+* Wed Nov 18 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-6
 - Fixed links to OpenMPI-1.10 libraries
 
-* Mon Nov 16 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-5
+* Mon Nov 16 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-5
 - Set MPI libraries by using pkgconfig
 - ExcludeArch s390x s390
 
-* Fri Oct 30 2015 Antonio Trande <sagitterATfedoraproject.org> - 5.0.1-4
+* Fri Oct 30 2015 Antonio Trande <sagitter@fedoraproject.org> - 5.0.1-4
 - Hardened builds on <F23
 
 * Tue Sep 15 2015 Orion Poplawski <orion@cora.nwra.com> - 5.0.1-3
