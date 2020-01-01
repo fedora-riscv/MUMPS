@@ -269,8 +269,11 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
-%if 0%{?rhel} && 0%{?rhel} >= 7
+%if 0%{?rhel} || 0%{?fedora} < 32
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
+%endif
+%if 0%{?fedora} && 0%{?fedora} >= 32
+export MPIBLACSLIBS=""
 %endif
 export MPI_COMPILER_NAME=openmpi
 export LD_LIBRARY_PATH="$MPI_LIB:%{_libdir}"
@@ -295,7 +298,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB -lscalapack %{?rhel:$MPIBLACSLIBS}" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB -Wl,-rpath -Wl,$MPI_LIB %{mpic_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -344,8 +347,11 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 export IPORD=" -I$PWD/PORD/include/"
 export LPORD=" -L$PWD/PORD/lib -lpord"
 
-%if 0%{?rhel} && 0%{?rhel} >= 7
+%if 0%{?rhel} || 0%{?fedora} < 32
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
+%endif
+%if 0%{?fedora} && 0%{?fedora} >= 32
+export MPIBLACSLIBS=""
 %endif
 export MPI_COMPILER_NAME=mpich
 export LD_LIBRARY_PATH=$MPI_LIB:%{_libdir}
@@ -370,7 +376,7 @@ make all \
  FL=$MPI_BIN/mpif77 \
  MUMPS_MPI="$MUMPS_MPI" \
  MUMPS_INCDIR="$MUMPS_INCDIR $INCBLAS" \
- MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB -lscalapack %{?rhel:$MPIBLACSLIBS}" \
+ MUMPS_LIBF77="${LIBBLAS} -L$MPI_LIB %{mpich_libs} $MPIFORTRANSLIB -lscalapack $MPIBLACSLIBS" \
  LMETISDIR="$LMETISDIR" LMETIS="$LMETIS" \
  SCOTCHDIR=$SCOTCHDIR \
  ISCOTCH=$ISCOTCH \
@@ -792,7 +798,7 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
 %changelog
 * Wed Jan 01 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-4
-- Use libmpiblacs separately on EPEL 7+
+- Use libmpiblacs separately with scalapack-2.1.*
 
 * Sun Nov 17 2019 Tom Callaway <spot@fedoraproject.org> - 5.2.1-3
 - libmpiblacs is now inside of libscalapack
