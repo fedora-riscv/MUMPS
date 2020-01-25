@@ -479,8 +479,9 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags} -fopenmp -lgomp -lrt|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -fopenmp -lgomp -lrt|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}-openmp/lib
 mkdir -p %{name}-%{version}-openmp/examples
@@ -806,7 +807,6 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 #######################################################
 
 %files common
-%{!?_licensedir:%global license %doc}
 %doc doc/*.pdf ChangeLog README
 %license LICENSE
 
