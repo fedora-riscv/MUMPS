@@ -23,9 +23,15 @@
 %global with_mpich 1
 %global with_openmpi 1
 
+# Workarounf for GCC-10
+# https://gcc.gnu.org/gcc-10/porting_to.html
+%if 0%{?fedora} && 0%{?fedora} > 31
+%global build_fflags %{build_fflags} -fallow-argument-mismatch
+%endif
+
 Name: MUMPS
 Version: 5.2.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -251,8 +257,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I%{_fmoddir}/openmpi|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 %if 0%{?rhel} && 0%{?rhel} >= 7
@@ -336,8 +343,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I%{_fmoddir}/mpich|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
@@ -408,8 +416,10 @@ cp -f %{SOURCE2} Makefile.inc
 sed -e 's| -DBLR_MT||g' -i Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{optflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD -I%{_fmoddir}|g' -i Makefile.inc
-sed -e 's|@@-O@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+
 
 mkdir -p %{name}-%{version}/lib
 mkdir -p %{name}-%{version}/examples
@@ -801,6 +811,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Sat Jan 25 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-5
+- Workaround for GFortran 10 (-fallow-argument-mismatch)
+
 * Wed Jan 01 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-4
 - Use libmpiblacs separately with scalapack-2.1.*
 

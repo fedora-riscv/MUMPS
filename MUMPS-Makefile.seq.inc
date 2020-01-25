@@ -82,8 +82,8 @@ METISLIB = -lmetis
 CDEFS   = -DAdd_
 
 #Begin Optimized options
-OPTF    = @@CFLAGS@@ -Dintel_ -DBLR_MT -Wno-unused-dummy-argument -Wno-maybe-uninitialized
-OPTL    = @@-O@@
+OPTF    = @@FFLAGS@@ -Dintel_ -DBLR_MT -Wno-unused-dummy-argument -Wno-maybe-uninitialized
+OPTL    = @@LDFLAGS@@
 OPTC    = @@CFLAGS@@
 #End Optimized options
 INCS = $(INCSEQ)
