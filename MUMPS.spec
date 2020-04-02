@@ -31,7 +31,7 @@
 
 Name: MUMPS
 Version: 5.2.1
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -57,9 +57,8 @@ Patch6: %{name}-shared-seq-openmp.patch
 Patch7: %{name}-examples-openmp.patch
 
 BuildRequires: gcc-gfortran
-%ifarch %{openblas_arches}
-BuildRequires: openblas-devel, openblas-srpm-macros
-%else
+BuildRequires: openblas-srpm-macros, openblas-devel
+%ifnarch %{openblas_arches}
 BuildRequires: blas-devel
 BuildRequires: lapack-devel
 %endif
@@ -811,6 +810,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Thu Apr 02 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-7
+- Fix rhbz#1819796
+
 * Tue Jan 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 5.2.1-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
 
