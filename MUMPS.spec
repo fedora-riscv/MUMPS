@@ -572,7 +572,7 @@ popd
 %endif
 
 %if 0%{?with_mpicheck}
-%if 0%{?with_openmpi}
+%if 0%{?with_openmpi_check}
 %{_openmpi_load}
 pushd %{name}-%{version}-openmpi/examples
 export LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH
@@ -587,7 +587,7 @@ popd
 %{_openmpi_unload}
 %endif
 
-%if 0%{?with_mpich}
+%if 0%{?with_mpich_check}
 ## Tests not perfomred due to 'gethostname' failure on koji
 %endif
 %endif
