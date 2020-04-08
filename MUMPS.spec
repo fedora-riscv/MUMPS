@@ -14,14 +14,21 @@
 %global with_openmp 0
 %endif
 
-%if 0%{?rhel} || 0%{?rhel} >= 7
-%global with_mpicheck 1
 %global with_mpich 1
 %global with_openmpi 1
+
+%if 0%{?fedora} || 0%{?rhel} == 7
+%global with_mpicheck 1
+%global with_mpich_check 0
+%global with_openmpi_check 1
 %endif
 
-%global with_mpich 1
-%global with_openmpi 1
+## Due to rhbz#1744780
+%if 0%{?rhel} && 0%{?rhel} == 8
+%global with_mpicheck 1
+%global with_mpich_check 0
+%global with_openmpi_check 0
+%endif
 
 # Workarounf for GCC-10
 # https://gcc.gnu.org/gcc-10/porting_to.html
@@ -31,7 +38,7 @@
 
 Name: MUMPS
 Version: 5.2.1
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -810,6 +817,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Apr 08 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-8
+- Fix rhbz#1819796 on epel8
+
 * Thu Apr 02 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-7
 - Fix rhbz#1819796
 
