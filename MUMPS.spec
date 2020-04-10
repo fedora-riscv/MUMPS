@@ -4,8 +4,9 @@
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version 5.2
+%global soname_version 5.3
 
+# Prevent broken links 
 %undefine _ld_as_needed
 
 %ifarch %{openblas_arches}
@@ -37,8 +38,8 @@
 %endif
 
 Name: MUMPS
-Version: 5.2.1
-Release: 8%{?dist}
+Version: 5.3.0
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -70,7 +71,7 @@ BuildRequires: blas-devel
 BuildRequires: lapack-devel
 %endif
 BuildRequires: metis-devel
-BuildRequires: scotch-devel
+BuildRequires: scotch-devel >= 6.0.1
 
 BuildRequires: openssh-clients
 BuildRequires: hwloc-devel
@@ -144,14 +145,14 @@ BuildRequires: openmpi-devel
 BuildRequires: blacs-openmpi-devel
 BuildRequires: scalapack-openmpi-devel
 BuildRequires: metis-devel
-BuildRequires: ptscotch-openmpi-devel
+BuildRequires: ptscotch-openmpi-devel >= 6.0.1
 %if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
 Requires: openmpi%{?_isa}
 Requires: scalapack-openmpi%{?_isa}
-Requires: ptscotch-openmpi%{?_isa}
+Requires: ptscotch-openmpi%{?_isa} >= 6.0.1
 
 %description openmpi
 MUMPS libraries compiled against openmpi.
@@ -190,14 +191,14 @@ BuildRequires: mpich-devel
 BuildRequires: blacs-mpich-devel
 BuildRequires: scalapack-mpich-devel
 BuildRequires: metis-devel
-BuildRequires: ptscotch-mpich-devel
+BuildRequires: ptscotch-mpich-devel >= 6.0.1
 %if 0%{?fedora}
 BuildRequires: rpm-mpi-hooks
 %endif
 Requires: %{name}-common = %{version}-%{release}
 Requires: mpich%{?_isa}
 Requires: scalapack-mpich%{?_isa}
-Requires: ptscotch-mpich%{?_isa}
+Requires: ptscotch-mpich%{?_isa} >= 6.0.1
 
 %description mpich
 MUMPS libraries compiled against MPICH.
@@ -263,8 +264,8 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I%{_fmoddir}/openmpi|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
@@ -327,6 +328,7 @@ make all \
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
 rm -rf lib/*
+cp -a include %{name}-%{version}-$MPI_COMPILER_NAME/
 cp -pr src/*.mod %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make clean
 %endif
@@ -349,9 +351,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -I%{_fmoddir}/mpich|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
 sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
@@ -405,6 +407,7 @@ make all \
 %{_mpich_unload}
 cp -pr lib/* %{name}-%{version}-$MPI_COMPILER_NAME/lib
 cp -pr examples/* %{name}-%{version}-$MPI_COMPILER_NAME/examples
+cp -a include %{name}-%{version}-$MPI_COMPILER_NAME/
 rm -rf lib/*
 cp -pr src/*.mod %{name}-%{version}-$MPI_COMPILER_NAME/modules
 make clean
@@ -422,9 +425,9 @@ cp -f %{SOURCE2} Makefile.inc
 sed -e 's| -DBLR_MT||g' -i Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 
 
 mkdir -p %{name}-%{version}/lib
@@ -464,6 +467,7 @@ make all \
 make -C examples
 cp -pr lib/* %{name}-%{version}/lib
 cp -pr examples/* %{name}-%{version}/examples
+cp -a include %{name}-%{version}/
 rm -rf lib/*
 cp -pr src/*.mod %{name}-%{version}/modules
 make clean
@@ -485,8 +489,8 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{build_cflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
-sed -e 's|@@FFLAGS@@|%{build_fflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -fopenmp -lgomp -lrt|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}-openmp/lib
@@ -526,6 +530,7 @@ make all \
 make -C examples
 cp -pr lib/* %{name}-%{version}-openmp/lib
 cp -pr examples/* %{name}-%{version}-openmp/examples
+cp -a include %{name}-%{version}-openmp/
 rm -rf lib/*
 cp -pr src/*.mod %{name}-%{version}-openmp/modules
 make clean
@@ -624,7 +629,7 @@ install -cpm 755 %{name}-%{version}-openmpi/examples/?simpletest $RPM_BUILD_ROOT
 install -cpm 755 %{name}-%{version}-openmpi/examples/input_* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-openmpi/examples/README-* $RPM_BUILD_ROOT%{_libdir}/openmpi/%{name}-%{version}-examples
 
-install -cpm 644 include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 %{name}-%{version}-openmpi/include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT$MPI_INCLUDE
 install -cpm 644 %{name}-%{version}-openmpi/modules/* $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}/
 %{_openmpi_unload}
@@ -661,7 +666,7 @@ install -cpm 755 %{name}-%{version}-mpich/examples/?simpletest $RPM_BUILD_ROOT%{
 install -cpm 755 %{name}-%{version}-mpich/examples/input_* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 install -cpm 755 %{name}-%{version}-mpich/examples/README-* $RPM_BUILD_ROOT%{_libdir}/mpich/%{name}-%{version}-examples
 
-install -cpm 644 include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
+install -cpm 644 %{name}-%{version}-mpich/include/*.h $RPM_BUILD_ROOT$MPI_INCLUDE
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT$MPI_INCLUDE
 install -cpm 644 %{name}-%{version}-mpich/modules/* $RPM_BUILD_ROOT$MPI_FORTRAN_MOD_DIR/%{name}-%{version}/
 %{_mpich_unload}
@@ -732,7 +737,7 @@ install -cpm 644 %{name}-%{version}-openmp/modules/* $RPM_BUILD_ROOT%{_fmoddir}/
 %endif
 ##############################################################
 
-install -cpm 644 include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
+install -cpm 644 %{name}-%{version}/include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
@@ -817,6 +822,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Wed Apr 08 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.0-1
+- Release 5.3.0
+
 * Wed Apr 08 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.2.1-8
 - Fix rhbz#1819796 on epel8
 
