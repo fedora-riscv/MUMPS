@@ -33,13 +33,13 @@
 
 # Workarounf for GCC-10
 # https://gcc.gnu.org/gcc-10/porting_to.html
-%if 0%{?fedora} && 0%{?fedora} > 31
+ %if 0%{?fedora} || 0%{?rhel} >= 9
 %global build_fflags %{build_fflags} -fallow-argument-mismatch
 %endif
 
 Name: MUMPS
 Version: 5.3.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -822,6 +822,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Sat Jun 13 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.1-2
+- Modified for building on ELN
+
 * Mon Apr 13 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.1-1
 - Release 5.3.1
 
