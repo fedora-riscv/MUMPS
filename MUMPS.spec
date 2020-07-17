@@ -33,13 +33,13 @@
 
 # Workarounf for GCC-10
 # https://gcc.gnu.org/gcc-10/porting_to.html
- %if 0%{?fedora} || 0%{?rhel} >= 9
+%if 0%{?fedora} || 0%{?rhel} >= 9
 %global build_fflags %{build_fflags} -fallow-argument-mismatch
 %endif
 
 Name: MUMPS
 Version: 5.3.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -287,10 +287,9 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
 
-%if 0%{?rhel} || 0%{?fedora} < 32
+%if (0%{?rhel} && 0%{?rhel} < 9) || (0%{?fedora} && 0%{?fedora} < 32)
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
-%endif
-%if 0%{?fedora} && 0%{?fedora} >= 32
+%else
 export MPIBLACSLIBS=""
 %endif
 export MPI_COMPILER_NAME=openmpi
@@ -367,10 +366,9 @@ LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lpts
 export IPORD=" -I$PWD/PORD/include/"
 export LPORD=" -L$PWD/PORD/lib -lpord"
 
-%if 0%{?rhel} || 0%{?fedora} < 32
+%if (0%{?rhel} && 0%{?rhel} < 9) || (0%{?fedora} && 0%{?fedora} < 32)
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
-%endif
-%if 0%{?fedora} && 0%{?fedora} >= 32
+%else
 export MPIBLACSLIBS=""
 %endif
 export MPI_COMPILER_NAME=mpich
@@ -822,6 +820,9 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %license LICENSE
 
 %changelog
+* Fri Jul 17 2020 Merlin Mathesius <mmathesi@redhat.com> - 5.3.1-3
+- Minor conditional fixes for ELN
+
 * Sat Jun 13 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.1-2
 - Modified for building on ELN
 
