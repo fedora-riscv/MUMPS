@@ -9,9 +9,12 @@
 # Prevent broken links 
 %undefine _ld_as_needed
 
-%if 0%{?fedora} >= 33
+# FlexiBLAS takes advantage of openblas-openmp by default.
+# OpenMP sub-package will be obsoleted in future.
+%if 0%{?fedora} && 0%{?fedora} >= 33
 %global with_openmp 1
-%else
+%endif
+%if 0%{?rhel} || 0%{?fedora} < 33
 %ifarch %{openblas_arches}
 %global with_openmp 1
 %else
