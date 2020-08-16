@@ -46,7 +46,7 @@
 
 Name: MUMPS
 Version: %{soname_version}.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -98,6 +98,7 @@ C interfaces, and can interface with ordering tools such as Scotch.
 Summary: The MUMPS headers and development-related files
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
+Requires: %{name}-srpm-macros = %{version}-%{release}
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -115,6 +116,12 @@ Summary: Documentation files for MUMPS
 BuildArch: noarch
 %description common
 This package contains common documentation files for MUMPS.
+
+%package srpm-macros
+Summary: Additional RPM macros for MUMPS
+BuildArch: noarch
+%description srpm-macros
+Additional RPM macros for MUMPS.
 
 ########################################################
 %if 0%{?with_openmp}
@@ -139,6 +146,7 @@ MUMPS libraries with OpenMP support.
 Summary: The MUMPS headers and development-related files
 Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
+Requires: %{name}-srpm-macros = %{version}-%{release}
 %description openmp-devel
 Shared links, header files for MUMPS OpenMP.
 
@@ -177,6 +185,7 @@ Summary: The MUMPS headers and development-related files
 BuildRequires: openmpi-devel
 Requires: %{name}-openmpi%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
+Requires: %{name}-srpm-macros = %{version}-%{release}
 %if 0%{?fedora}
 Requires: rpm-mpi-hooks
 %endif
@@ -222,6 +231,7 @@ MUMPS libraries compiled against MPICH.
 Summary: The MUMPS headers and development-related files
 BuildRequires: mpich-devel
 Requires: %{name}-mpich%{?_isa} = %{version}-%{release}
+Requires: %{name}-srpm-macros = %{version}-%{release}
 %if 0%{?fedora}
 Requires: rpm-mpi-hooks
 %endif
@@ -774,6 +784,13 @@ install -cpm 644 %{name}-%{version}/include/*.h $RPM_BUILD_ROOT%{_includedir}/%{
 install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 
+# rpm macro for version checking
+mkdir -p $RPM_BUILD_ROOT%{_rpmmacrodir}
+cat > $RPM_BUILD_ROOT%{_rpmmacrodir}/macros.MUMPS <<EOF
+# MUMPS version is
+%%_MUMPS_version %{version}
+EOF
+
 #######################################################
 %if 0%{?with_openmpi}
 %files openmpi
@@ -854,7 +871,13 @@ install -cpm 644 PORD/include/* $RPM_BUILD_ROOT%{_includedir}/%{name}
 %doc doc/*.pdf ChangeLog README
 %license LICENSE
 
+%files srpm-macros
+%{_rpmmacrodir}/macros.MUMPS
+
 %changelog
+* Sat Aug 15 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.3-2
+- Add an RPM macro for checking MUMPS version
+
 * Tue Aug 04 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.3-1
 - Release 5.3.3
 
