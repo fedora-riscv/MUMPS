@@ -45,8 +45,8 @@
 %endif
 
 Name: MUMPS
-Version: %{soname_version}.3
-Release: 2%{?dist}
+Version: %{soname_version}.4
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -875,6 +875,9 @@ EOF
 %{_rpmmacrodir}/macros.MUMPS
 
 %changelog
+* Tue Oct 06 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.4-1
+- Release 5.3.4
+
 * Sat Aug 15 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.3-2
 - Add an RPM macro for checking MUMPS version
 
