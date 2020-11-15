@@ -45,7 +45,7 @@
 %endif
 
 Name: MUMPS
-Version: %{soname_version}.4
+Version: %{soname_version}.5
 Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
@@ -875,6 +875,9 @@ EOF
 %{_rpmmacrodir}/macros.MUMPS
 
 %changelog
+* Sat Nov 14 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.5-1
+- Release 5.3.5
+
 * Tue Oct 06 2020 Antonio Trande <sagitter@fedoraproject.org> - 5.3.4-1
 - Release 5.3.4
 
