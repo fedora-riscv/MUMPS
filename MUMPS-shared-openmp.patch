@@ -5,18 +5,18 @@ Index: mumps/src/Makefile
 --- mumps.orig/src/Makefile
 +++ mumps/src/Makefile
 @@ -23,8 +23,10 @@
- 
  include $(topdir)/Makefile.inc
  
--mumps_lib:    $(libdir)/libmumps_common$(PLAT)$(LIBEXT) \
+ mumps_lib:    $(incdir)/mumps_int_def.h \
+-              $(libdir)/libmumps_common$(PLAT)$(LIBEXT) \
 -              $(libdir)/lib$(ARITH)mumps$(PLAT)$(LIBEXT)
-+mumps_lib:    $(libdir)/libmumpso_common$(PLAT).a \
++              $(libdir)/libmumpso_common$(PLAT).a \
 +              $(libdir)/libmumpso_common$(PLAT).so \
 +              $(libdir)/lib$(ARITH)mumpso$(PLAT).a \
 +              $(libdir)/lib$(ARITH)mumpso$(PLAT).so
  
- OBJS_COMMON_MOD = \
-         ana_omp_m.o\
+ # Build $(incdir)/mumps_int_def.h, needed by mumps_c_types.h
+ $(incdir)/mumps_int_def.h: build_mumps_int_def
 @@ -154,14 +154,22 @@
          $(ARITH)type3_root.o\
          $(ARITH)mumps_restart.o
@@ -44,21 +44,20 @@ Index: mumps/src/Makefile
  # Dependencies between modules:
  $(ARITH)mumps_load.o:		$(ARITH)mumps_comm_buffer.o \
  				$(ARITH)mumps_struc_def.o \
-@@ -259,13 +267,13 @@
+@@ -405,13 +415,13 @@
  
  .SUFFIXES: .c .F .o
  .F.o:
--	$(FC) $(OPTF) $(INCS) $(IORDERINGSF) $(ORDERINGSF) -I. -I../include -c $*.F $(OUTF)$*.o
+-	$(FC) $(OPTF) -I. -I../include $(INCS) $(IORDERINGSF) $(ORDERINGSF) -c $*.F $(OUTF)$*.o
 +	$(FC) $(OPTF) $(INCS) $(IORDERINGSF) $(ORDERINGSF) -I. -I../include -fPIC -c $*.F $(OUTF)$*.o
  .c.o:
--	$(CC) $(OPTC) $(INCS) -I../include $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -c $*.c $(OUTC)$*.o
+-	$(CC) $(OPTC) -I../include $(INCS) $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -c $*.c $(OUTC)$*.o
 +	$(CC) $(OPTC) $(INCS) -I../include $(CDEFS) $(IORDERINGSC) $(ORDERINGSC) -fPIC -c $*.c $(OUTC)$*.o
  
  $(ARITH)mumps_c.o:	mumps_c.c
- 	$(CC) $(OPTC) $(INCS) $(CDEFS) -DMUMPS_ARITH=MUMPS_ARITH_$(ARITH) \
--	      $(IORDERINGSC) $(ORDERINGSC) -I../include -c mumps_c.c $(OUTC)$@
+ 	$(CC) $(OPTC) -I../include $(INCS) $(CDEFS) -DMUMPS_ARITH=MUMPS_ARITH_$(ARITH) \
+-	      $(IORDERINGSC) $(ORDERINGSC) -c mumps_c.c $(OUTC)$@
 +	      $(IORDERINGSC) $(ORDERINGSC) -I../include -fPIC -c mumps_c.c $(OUTC)$@
  
- 
  clean:
-
+ 	$(RM) *.o *.mod $(incdir)/mumps_int_def.h
