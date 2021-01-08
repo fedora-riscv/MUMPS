@@ -71,6 +71,7 @@ Patch5: %{name}-shared-openmp.patch
 Patch6: %{name}-shared-seq-openmp.patch
 Patch7: %{name}-examples-openmp.patch
 
+BuildRequires: make
 BuildRequires: gcc-gfortran
 %if 0%{?fedora} >= 33
 BuildRequires: pkgconfig(flexiblas)
