@@ -37,12 +37,12 @@ Index: mumps/Makefile
 ===================================================================
 --- mumps.orig/Makefile
 +++ mumps/Makefile
-@@ -51,7 +51,7 @@
- dexamples:	d
- 	(cd examples ; $(MAKE) d)
+@@ -42,7 +42,7 @@
  
--requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT)$(LIBEXT)
-+requiredobj: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpordo$(PLAT).a $(libdir)/libpordo$(PLAT).so
+ include Makefile.inc
+ 
+-prerequisites: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpord$(PLAT)$(LIBEXT)
++prerequisites: Makefile.inc $(LIBSEQNEEDED) $(libdir)/libpordo$(PLAT).a $(libdir)/libpordo$(PLAT).so
  
  # dummy MPI library (sequential version)
  

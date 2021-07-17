@@ -4,17 +4,17 @@
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version 5.3
+%global soname_version 5.4
 
 # Prevent broken links 
 %undefine _ld_as_needed
 
 # FlexiBLAS takes advantage of openblas-openmp by default.
 # OpenMP sub-package will be obsoleted in future.
-%if 0%{?fedora} && 0%{?fedora} >= 33
-%global with_openmp 1
+%if 0%{?fedora} && 0%{?fedora} >= 35
+%global with_openmp 0
 %endif
-%if 0%{?rhel} || 0%{?fedora} < 33
+%if 0%{?rhel} || 0%{?fedora} < 35
 %ifarch %{openblas_arches}
 %global with_openmp 1
 %else
@@ -45,8 +45,8 @@
 %endif
 
 Name: MUMPS
-Version: %{soname_version}.5
-Release: 2%{?dist}
+Version: %{soname_version}.0
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -73,6 +73,7 @@ Patch7: %{name}-examples-openmp.patch
 
 BuildRequires: make
 BuildRequires: gcc-gfortran
+BuildRequires: gcc
 %if 0%{?fedora} >= 33
 BuildRequires: pkgconfig(flexiblas)
 %else
@@ -89,6 +90,10 @@ BuildRequires: openssh-clients
 BuildRequires: hwloc-devel
 Requires:      %{name}-common = %{version}-%{release}
 
+%if 0%{?fedora} && 0%{?fedora} >= 35
+Obsoletes: %{name}-openmp < 0:5.4.0-1
+%endif
+
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
 particular focus on symmetric positive definite matrices.  It can
@@ -100,6 +105,11 @@ Summary: The MUMPS headers and development-related files
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: gcc-gfortran%{?_isa}
 Requires: %{name}-srpm-macros = %{version}-%{release}
+# FlexiBLAS takes advantage of openblas-openmp by default.
+# OpenMP sub-package will be obsoleted in future.
+%if 0%{?fedora} && 0%{?fedora} >= 35
+Obsoletes: %{name}-openmp-devel < 0:5.4.0-1
+%endif
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -290,9 +300,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 %if 0%{?rhel} && 0%{?rhel} >= 7
@@ -381,9 +391,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
@@ -459,9 +469,9 @@ cp -f %{SOURCE2} Makefile.inc
 sed -e 's| -DBLR_MT||g' -i Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 
 
 mkdir -p %{name}-%{version}/lib
@@ -528,9 +538,9 @@ rm -f Makefile.inc
 cp -f %{SOURCE2} Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@CFLAGS@@|%{build_cflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@FFLAGS@@|%{build_fflags} -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -fopenmp -lgomp -lrt|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch -fopenmp -lgomp -lrt|g' -i Makefile.inc
 
 mkdir -p %{name}-%{version}-openmp/lib
 mkdir -p %{name}-%{version}-openmp/examples
@@ -876,6 +886,9 @@ EOF
 %{_rpmmacrodir}/macros.MUMPS
 
 %changelog
+* Fri Jul 16 2021 Antonio Trande <sagitter@fedoraproject.org> - 5.4.0-1
+- Release 5.4.0
+
 * Mon Jan 25 2021 Fedora Release Engineering <releng@fedoraproject.org> - 5.3.5-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
 
