@@ -2,18 +2,13 @@ Create a shared version of the sequential library, MUST BE LAST IN SERIES
 
 --- libseq/Makefile
 +++ libseq/Makefile
-@@ -8,7 +8,7 @@
- include ../Makefile.inc
-
+@@ -9,15 +9,18 @@
+ topdir = ..
+ include $(topdir)/Makefile.inc
+ 
 -libmpiseq: libmpiseq$(PLAT)$(LIBEXT)
 +libmpiseq: libmpiseq$(PLAT)$(LIBEXT) libmpiseq$(PLAT).so
-
- libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
- 	$(AR)$@ mpi.o mpic.o elapse.o
-
---- libseq/Makefile
-+++ libseq/Makefile
-@@ -13,10 +13,13 @@
+ 
  libmpiseq$(PLAT)$(LIBEXT): mpi.o mpic.o elapse.o
  	$(AR)$@ mpi.o mpic.o elapse.o
  	$(RANLIB) $@
