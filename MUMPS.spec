@@ -4,23 +4,10 @@
 %global _incmpichdir %{_includedir}/mpich-%{_arch}
 %global _libmpichdir %{_libdir}/mpich/lib
 
-%global soname_version 5.4
+%global soname_version 5.5
 
 # Prevent broken links 
 %undefine _ld_as_needed
-
-# FlexiBLAS takes advantage of openblas-openmp by default.
-# OpenMP sub-package will be obsoleted in future.
-%if 0%{?fedora} && 0%{?fedora} >= 35
-%global with_openmp 0
-%endif
-%if 0%{?rhel} || 0%{?fedora} < 35
-%ifarch %{openblas_arches}
-%global with_openmp 1
-%else
-%global with_openmp 0
-%endif
-%endif
 
 %global with_mpich 1
 %global with_openmpi 1
@@ -45,8 +32,8 @@
 %endif
 
 Name: MUMPS
-Version: %{soname_version}.1
-Release: 2%{?dist}
+Version: %{soname_version}.0
+Release: 1%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
@@ -66,15 +53,10 @@ Patch1: %{name}-shared-pord.patch
 Patch2: %{name}-shared.patch
 Patch3: %{name}-shared-seq.patch
 
-Patch4: %{name}-shared-pord-openmp.patch
-Patch5: %{name}-shared-openmp.patch
-Patch6: %{name}-shared-seq-openmp.patch
-Patch7: %{name}-examples-openmp.patch
-
 BuildRequires: make
 BuildRequires: gcc-gfortran
 BuildRequires: gcc
-%if 0%{?fedora} >= 33
+%if 0%{?fedora} || 0%{?eln}
 BuildRequires: pkgconfig(flexiblas)
 %else
 BuildRequires: openblas-srpm-macros, openblas-devel
@@ -90,9 +72,7 @@ BuildRequires: openssh-clients
 BuildRequires: hwloc-devel
 Requires:      %{name}-common = %{version}-%{release}
 
-%if 0%{?fedora} && 0%{?fedora} >= 35
 Obsoletes: %{name}-openmp < 0:5.4.0-1
-%endif
 
 %description
 MUMPS implements a direct solver for large sparse linear systems, with a
@@ -107,9 +87,8 @@ Requires: gcc-gfortran%{?_isa}
 Requires: %{name}-srpm-macros = %{version}-%{release}
 # FlexiBLAS takes advantage of openblas-openmp by default.
 # OpenMP sub-package will be obsoleted in future.
-%if 0%{?fedora} && 0%{?fedora} >= 35
 Obsoletes: %{name}-openmp-devel < 0:5.4.0-1
-%endif
+
 %description devel
 Shared links and header files.
 This package contains dummy MPI header file 
@@ -133,42 +112,6 @@ Summary: Additional RPM macros for MUMPS
 BuildArch: noarch
 %description srpm-macros
 Additional RPM macros for MUMPS.
-
-########################################################
-%if 0%{?with_openmp}
-%package openmp
-Summary: MUMPS libraries with OpenMP support
-
-%if 0%{?fedora} >= 33
-BuildRequires: pkgconfig(flexiblas)
-%else
-%ifarch %{openblas_arches}
-BuildRequires: openblas-devel, openblas-srpm-macros
-%else
-BuildRequires: blas-devel
-BuildRequires: lapack-devel
-%endif
-%endif
-Requires: %{name}-common = %{version}-%{release}
-%description openmp
-MUMPS libraries with OpenMP support.
-
-%package openmp-devel
-Summary: The MUMPS headers and development-related files
-Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
-Requires: %{name}-devel%{?_isa} = %{version}-%{release}
-Requires: %{name}-srpm-macros = %{version}-%{release}
-%description openmp-devel
-Shared links, header files for MUMPS OpenMP.
-
-%package openmp-examples
-Summary: The MUMPS OpenMP common illustrative test programs
-Requires: %{name}-openmp%{?_isa} = %{version}-%{release}
-%description openmp-examples
-This package contains common illustrative
-test programs about how MUMPS-openmp can be used.
-%endif
-##########################################################
 
 ########################################################
 %if 0%{?with_openmpi}
@@ -300,9 +243,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %endif
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -fPIC -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -fPIC -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpi|g' -i Makefile.inc
 
 %if 0%{?rhel} && 0%{?rhel} >= 7
@@ -322,8 +265,9 @@ ISCOTCH=-I$MPI_INCLUDE
 LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
+FPIC_OPT=-fPIC
 
-%if (0%{?rhel} && 0%{?rhel} < 9) || (0%{?fedora} && 0%{?fedora} < 32)
+%if 0%{?rhel} && 0%{?rhel} < 9
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 %else
 export MPIBLACSLIBS=""
@@ -336,7 +280,7 @@ mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
 
-%if 0%{?fedora} >= 33
+%if 0%{?fedora} || 0%{?eln}
 export LIBBLAS="-L%{_libdir} -lflexiblas"
 export INCBLAS=-I%{_includedir}/flexiblas
 %else
@@ -391,9 +335,9 @@ sed -e 's| -DBLR_MT||g' -i Makefile.inc
 %global mpich_libs %(env PKG_CONFIG_PATH=%{_libmpichdir}/pkgconfig pkg-config --libs mpich)
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -fPIC -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32 -I${MPI_FORTRAN_MOD_DIR}|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -fPIC -Dscotch -Dmetis -Dptscotch -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 sed -e 's|@@MPICLIB@@|-lmpich|g' -i Makefile.inc
 sed -e 's|@@MPIFORTRANLIB@@|%{mpifort_libs}|g' -i Makefile.inc
 
@@ -406,8 +350,9 @@ ISCOTCH=-I$MPI_INCLUDE
 LSCOTCH=" -L$MPI_LIB -lesmumps -lscotch -lscotcherr -lptesmumps -lptscotch -lptscotcherr"
 export IPORD=" -I$PWD/PORD/include/"
 export LPORD=" -L$PWD/PORD/lib -lpord"
+FPIC_OPT=-fPIC
 
-%if (0%{?rhel} && 0%{?rhel} < 9) || (0%{?fedora} && 0%{?fedora} < 32)
+%if 0%{?rhel} && 0%{?rhel} < 9
 export MPIBLACSLIBS="-L$MPI_LIB -lmpiblacs"
 %else
 export MPIBLACSLIBS=""
@@ -420,7 +365,7 @@ mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/lib
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/examples
 mkdir -p %{name}-%{version}-$MPI_COMPILER_NAME/modules
 
-%if 0%{?fedora} >= 33
+%if 0%{?fedora} || 0%{?eln}
 export LIBBLAS="-L%{_libdir} -lflexiblas"
 export INCBLAS=-I%{_includedir}/flexiblas
 %else
@@ -459,7 +404,7 @@ make clean
 
 ######################################################
 
-patch -p0 < %{PATCH3}
+patch -p1 < %{PATCH3}
 
 ## Build serial version
 rm -f Makefile.inc
@@ -469,9 +414,9 @@ cp -f %{SOURCE2} Makefile.inc
 sed -e 's| -DBLR_MT||g' -i Makefile.inc
 
 # Set build flags macro
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch|g' -i Makefile.inc
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@FFLAGS@@|%{build_fflags} -fPIC -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
+sed -e 's|@@LDFLAGS@@|%{__global_ldflags}|g' -i Makefile.inc
+sed -e 's|@@CFLAGS@@|%{build_cflags} -fPIC -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
 
 
 mkdir -p %{name}-%{version}/lib
@@ -480,8 +425,9 @@ mkdir -p %{name}-%{version}/modules
 
 IPORD=" -I$PWD/PORD/include/"
 LPORD=" -L$PWD/PORD/lib -lpord"
+FPIC_OPT=-fPIC
 
-%if 0%{?fedora} >= 33
+%if 0%{?fedora} || 0%{?eln}
 export LIBBLAS="-L%{_libdir} -lflexiblas"
 export INCBLAS=-I%{_includedir}/flexiblas
 %else
@@ -494,7 +440,7 @@ export INCBLAS=-I%{_includedir}
 %endif
 %endif
 
-export LDFLAGS="%{__global_ldflags} -Wl,-z,now"
+export LDFLAGS="%{__global_ldflags}"
 make all \
  SONAME_VERSION=%{soname_version} \
  CC=gcc \
@@ -522,84 +468,11 @@ cp -pr src/*.mod %{name}-%{version}/modules
 make clean
 #######################################################
 
-## Build OpenMP version
-%if 0%{?with_openmp}
-
-patch -R -p0 < %{PATCH3}
-patch -R -p1 < %{PATCH2}
-patch -R -p1 < %{PATCH1}
-
-patch -p1 < %{PATCH4}
-patch -p1 < %{PATCH5}
-patch -p0 < %{PATCH6}
-patch -p0 < %{PATCH7}
-
-rm -f Makefile.inc
-cp -f %{SOURCE2} Makefile.inc
-
-# Set build flags macro
-sed -e 's|@@CFLAGS@@|%{build_cflags} -Wno-lto-type-mismatch -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@FFLAGS@@|%{build_fflags} -Wno-lto-type-mismatch -fopenmp -Dscotch -Dmetis -DWITHOUT_PTHREAD -DINTSIZE32|g' -i Makefile.inc
-sed -e 's|@@LDFLAGS@@|%{__global_ldflags} -Wno-lto-type-mismatch -fopenmp -lgomp -lrt|g' -i Makefile.inc
-
-mkdir -p %{name}-%{version}-openmp/lib
-mkdir -p %{name}-%{version}-openmp/examples
-mkdir -p %{name}-%{version}-openmp/modules
-
-IPORD=" -I$PWD/PORD/include/"
-LPORD=" -L$PWD/PORD/lib -lpordo"
-
-%if 0%{?fedora} >= 33
-export LIBBLAS="-L%{_libdir} -lflexiblas"
-export INCBLAS=-I%{_includedir}/flexiblas
-%else
-%ifarch %{openblas_arches}
-export LIBBLAS="-L%{_libdir} -lopenblaso"
-export INCBLAS=-I%{_includedir}/openblas
-%else
-export LIBBLAS="-L%{_libdir} -lblas -llapack"
-export INCBLAS=-I%{_includedir}
-%endif
-%endif
-
-export LDFLAGS="%{__global_ldflags} -fopenmp -lgomp -lrt"
-make all \
- SONAME_VERSION=%{soname_version} \
- CC=gcc \
- FC=gfortran \
- FL=gfortran \
- MUMPS_LIBF77="${LIBBLAS}" \
- LIBBLAS="${LIBBLAS}" \
- LIBOTHERS=" " \
- LIBSEQ="-L../libseq -lmpiseqo" \
- INCSEQ="-I../libseq $INCBLAS" \
- LMETISDIR=%{_libdir} \
- LMETIS="-L%{_libdir} -lmetis" \
- SCOTCHDIR=%{_prefix} \
- ISCOTCH="-I%{_includedir}" \
- LSCOTCH=" -L%{_libdir} -lesmumps -lscotch -lscotcherr -lscotchmetis" \
- IPORD="$IPORD" \
- LPORD="$LPORD" \
- OPTL="%{__global_ldflags} -fopenmp -lrt"
-make -C examples
-cp -pr lib/* %{name}-%{version}-openmp/lib
-cp -pr examples/* %{name}-%{version}-openmp/examples
-cp -a include %{name}-%{version}-openmp/
-rm -rf lib/*
-cp -pr src/*.mod %{name}-%{version}-openmp/modules
-make clean
-%endif
-#######################################################
-
 # Make sure documentation is using Unicode.
 iconv -f iso8859-1 -t utf-8 README > README-t && mv README-t README
 
 %if 0%{?el7}
 %ldconfig_scriptlets
-%endif
-
-%if 0%{?with_openmp}
-%ldconfig_scriptlets openmp
 %endif
 
 %check
@@ -616,21 +489,6 @@ LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
 LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
  ./c_example
 popd
-
-%if 0%{?with_openmp}
-pushd %{name}-%{version}-openmp/examples
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
- ./ssimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
- ./dsimpletest < input_simpletest_real
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
- ./csimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
- ./zsimpletest < input_simpletest_cmplx
-LD_LIBRARY_PATH=$PWD:../lib:$LD_LIBRARY_PATH \
- ./c_example
-popd
-%endif
 
 %if 0%{?with_mpicheck}
 %if 0%{?with_openmpi_check}
@@ -735,16 +593,7 @@ mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
 mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/%{name}-%{version}
 
 # Install libraries.
-install -cpm 755 %{name}-%{version}/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
-
-# Install development files.
-install -cpm 755 %{name}-%{version}/lib/libmumps_common.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/lib*mumps.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/lib*mumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/libpord-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/libpord.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/libmpiseq-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}/lib/libmpiseq.so $RPM_BUILD_ROOT%{_libdir}
+install -cpm 755 %{name}-%{version}/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}/
 
 # Make symbolic links instead hard-link 
 ln -sf libsmumps-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumps.so
@@ -759,39 +608,6 @@ install -cpm 755 %{name}-%{version}/examples/?simpletest $RPM_BUILD_ROOT%{_libex
 install -cpm 755 %{name}-%{version}/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 755 %{name}-%{version}/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}/examples
 install -cpm 644 %{name}-%{version}/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-%{version}/
-
-############################################################
-%if 0%{?with_openmp}
-mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
-mkdir -p $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}
-
-# Install libraries.
-install -cpm 755 %{name}-%{version}-openmp/lib/lib*-*.so $RPM_BUILD_ROOT%{_libdir}
-
-# Install development files.
-install -cpm 755 %{name}-%{version}-openmp/lib/libmumpso_common.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/lib*mumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/libpordo.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/libmpiseqo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}
-install -cpm 755 %{name}-%{version}-openmp/lib/libpordo.so $RPM_BUILD_ROOT%{_libdir}
-
-# Make symbolic links instead hard-link 
-ln -sf libsmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libsmumpso.so
-ln -sf libcmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libcmumpso.so
-ln -sf libzmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libzmumpso.so
-ln -sf libdmumpso-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libdmumpso.so
-ln -sf libmumpso_common-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmumpso_common.so
-ln -sf libpordo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libpordo.so
-ln -sf libmpiseqo-%{soname_version}.so $RPM_BUILD_ROOT%{_libdir}/libmpiseqo.so
-
-install -cpm 755 %{name}-%{version}-openmp/examples/?simpletest $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
-install -cpm 755 %{name}-%{version}-openmp/examples/input_* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
-install -cpm 755 %{name}-%{version}-openmp/examples/README-* $RPM_BUILD_ROOT%{_libexecdir}/%{name}-%{version}-openmp/examples
-install -cpm 644 %{name}-%{version}-openmp/modules/* $RPM_BUILD_ROOT%{_fmoddir}/%{name}-openmp-%{version}/
-%endif
-##############################################################
 
 install -cpm 644 %{name}-%{version}/include/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
 install -cpm 644 libseq/*.h $RPM_BUILD_ROOT%{_includedir}/%{name}
@@ -860,26 +676,6 @@ EOF
 %files examples
 %{_libexecdir}/%{name}-%{version}/
 
-#######################################################
-%if 0%{?with_openmp}
-%files openmp
-%{_libdir}/libmpiseqo-%{soname_version}.so
-%{_libdir}/libpordo-%{soname_version}.so
-%{_libdir}/lib?mumpso-%{soname_version}.so
-%{_libdir}/libmumpso_common-%{soname_version}.so
-
-%files openmp-devel
-%{_libdir}/lib?mumpso.so
-%{_libdir}/libmumpso_common.so
-%{_libdir}/libpordo.so
-%{_libdir}/libmpiseqo.so
-%{_fmoddir}/%{name}-openmp-%{version}/
-
-%files openmp-examples
-%{_libexecdir}/%{name}-%{version}-openmp/
-%endif
-#######################################################
-
 %files common
 %doc doc/*.pdf ChangeLog README
 %license LICENSE
@@ -888,6 +684,10 @@ EOF
 %{_rpmmacrodir}/macros.MUMPS
 
 %changelog
+* Sat Jul 09 2022 Antonio Trande <sagitter@fedoraproject.org> - 5.5.0-1
+- Release 5.5.0
+- Fix ELN builds
+
 * Wed Jan 19 2022 Fedora Release Engineering <releng@fedoraproject.org> - 5.4.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
 
