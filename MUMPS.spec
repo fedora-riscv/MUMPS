@@ -20,7 +20,7 @@
 %global with_openmpi_check 0
 %else
 %global with_openmpi_check 1
-%endof
+%endif
 %endif
 
 %if 0%{?fedora} && 0%{?fedora} < 38
