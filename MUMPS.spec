@@ -223,9 +223,9 @@ test programs about how MUMPS-mpich can be used.
 %prep
 %setup -q -n %{name}_%{version}
 
-%patch0 -p1 -b .examples-mpilibs
-%patch1 -p1 -b .shared-pord
-%patch2 -p1 -b .shared
+%patch -P 0 -p1 -b .examples-mpilibs
+%patch -P 1 -p1 -b .shared-pord
+%patch -P 2 -p1 -b .shared
 
 mv examples/README examples/README-examples
 
