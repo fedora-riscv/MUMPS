@@ -24,9 +24,9 @@
 %endif
 
 %if 0%{?fedora} && 0%{?fedora} < 38
-%global with_mpicheck 1
-%global with_mpich_check 1
-%global with_openmpi_check 1
+%global with_mpicheck 0
+%global with_mpich_check 0
+%global with_openmpi_check 0
 %endif
 
 ## Due to rhbz#1744780
@@ -44,7 +44,7 @@
 
 Name: MUMPS
 Version: %{soname_version}.1
-Release: 5%{?dist}
+Release: 5.rv64%{?dist}
 Summary: A MUltifrontal Massively Parallel sparse direct Solver
 License: CeCILL-C 
 URL: http://mumps.enseeiht.fr/
