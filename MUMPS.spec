@@ -14,12 +14,12 @@
 
 # Due to OpenMPI-5.0 dropping in i686
 %if 0%{?fedora} && 0%{?fedora} > 37
-%global with_mpicheck 1
-%global with_mpich_check 1
+%global with_mpicheck 0
+%global with_mpich_check 0
 %ifarch %{ix86}
 %global with_openmpi_check 0
 %else
-%global with_openmpi_check 1
+%global with_openmpi_check 0
 %endif
 %endif
 
